@@ -3,424 +3,989 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Endless Platformer</title>
+<title>run4fun</title>
 
 <style>
-  :root{
-    --bg:#4b8ce6;
-    --platform:#2ea044;
-    --player:#ffd42a;
-  }
-  html,body{
-    margin:0;
-    height:100%;
-    background:#4b8ce6;
-    overflow:hidden;
-  }
-  canvas{
-    display:block;
-    width:100vw;
-    height:100vh;
-    background:#4b8ce6;
-  }
+  /* --- Global & Base Canvas Styles --- */
+  html, body {
+    margin: 0;
+    height: 100%;
+    background: #4b8ce6; /* Default sky background */
+    overflow: hidden;
+    font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  canvas {
+    display: block;
+    width: 100vw;
+    height: 100vh;
+  }
 
-  #centerOverlay{
-    position:absolute;
-    left:50%;
-    top:50%;
-    transform:translate(-50%,-50%);
-    color:white;
-    text-align:center;
-    font-size:30px;
-    pointer-events:none;
-    text-shadow:0 0 8px black;
-  }
+  /* --- Overlay & UI Styles (Always Visible) --- */
+  #centerOverlay, #scoreBox, #starBox {
+    position: absolute;
+    color: white;
+    pointer-events: none;
+    font-weight: bold;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+    font-family: monospace; /* Applied to score/star boxes */
+  }
+  
+  #centerOverlay {
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    font-size: 30px;
+  }
 
-  /* Restored + improved Dark Souls YOU DIED screen */
-  #deathScreen{
-    position:absolute;
-    inset:0;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    font-size:72px;
-    font-weight:700;
-    color:#aa1a1a;
-    text-shadow:0 0 18px #000, 0 0 6px #000;
-    background:rgba(0,0,0,0.60);
-    opacity:0;
-    pointer-events:none;
-    transition:opacity 0.8s ease-out;
-    letter-spacing:4px;
-    font-family:"Georgia", serif;
-  }
+  #scoreBox {
+    top: 20px;
+    left: 20px;
+    font-size: 24px;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.6);
+  }
 
-  #touchButton{
-    position:absolute;
-    right:20px;
-    bottom:20px;
-    width:75px;
-    height:75px;
-    border-radius:50%;
-    background:#ffd42a;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    font-weight:bold;
-    user-select:none;
-  }
-  @media (min-width:700px){
-    #touchButton{display:none;}
-  }
+  #starBox {
+    top: 50px; /* Positioned just below the score box */
+    left: 20px;
+    color: #ffd700; /* Gold */
+    font-size: 20px;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.6);
+  }
+
+  /* --- Touch Input Button (Mobile Only) --- */
+  #touchButton {
+    position: absolute;
+    right: 20px;
+    bottom: 20px;
+    width: 75px;
+    height: 75px;
+    border-radius: 50%;
+    background: #ffd42a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    user-select: none;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+  }
+  @media (min-width: 700px) {
+    #touchButton { display: none; }
+  }
+
+  /* --- Dark Souls Style Death Screen --- */
+  #deathScreen {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background: rgba(0,0,0,0.60);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.8s ease-out;
+    font-family: "Georgia", serif;
+  }
+  #deathTitle {
+    font-size: 80px;
+    font-weight: 700;
+    color: #8C0000;
+    text-shadow: 
+      -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 
+      0 0 10px rgba(0,0,0,0.8);
+    letter-spacing: 15px;
+    margin-bottom: 20px;
+    position: relative;
+    top: -30px;
+    padding-left: 15px; /* Adjusts for letter spacing */
+  }
+  #deathSubtext {
+    font-size: 24px;
+    color: #e0d165;
+    text-shadow: 0 1px 2px #000;
+    letter-spacing: 2px;
+    position: relative;
+    top: -20px;
+  }
 </style>
 </head>
 
 <body>
 <canvas id="game"></canvas>
 
+<div id="scoreBox">SCORE: 0</div>
+<div id="starBox">STARS: 0</div> 
 <div id="centerOverlay">Tap / Space to Start</div>
-<div id="deathScreen">YOU DIED</div>
+<div id="deathScreen">
+    <div id="deathTitle">YOU DIED</div>
+    <div id="deathSubtext"></div> 
+</div>
 <div id="touchButton">▲</div>
 
 <script>
 (() => {
-
+// --- CORE SETUP & INITIALIZATION ---
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
-let DPR = window.devicePixelRatio || 1;
+const overlay = document.getElementById("centerOverlay");
+const deathScreen = document.getElementById("deathScreen");
+const deathSubtextElement = document.getElementById("deathSubtext"); 
+const scoreBox = document.getElementById("scoreBox");
+const starBox = document.getElementById("starBox"); 
 
+let DPR = window.devicePixelRatio || 1;
+let gameTime = 0; // Tracks total elapsed time for animations (e.g., star pulse)
+let last = performance.now();
+
+/**
+ * Handles canvas resizing for high DPI screens.
+ */
 function resize(){
-  DPR = window.devicePixelRatio || 1;
-  canvas.width = innerWidth * DPR;
-  canvas.height = innerHeight * DPR;
-  ctx.setTransform(DPR,0,0,DPR,0,0);
+  DPR = window.devicePixelRatio || 1;
+  canvas.width = innerWidth * DPR;
+  canvas.height = innerHeight * DPR;
+  ctx.setTransform(DPR,0,0,DPR,0,0);
 }
 resize();
 window.addEventListener("resize", resize);
 
+
+// --- CONSTANTS & GAME STATE ---
+
 const WORLD = {
-  width: () => canvas.width / DPR,
-  height: () => canvas.height / DPR,
-  gravity: 1800
+  width: () => canvas.width / DPR,
+  height: () => canvas.height / DPR,
+  gravity: 1800
 };
 
+// Player Object
 let player = {
-  x:150,
-  y:0,
-  size:36,
-  vy:0,
-  jumpsLeft:2,
-  onGround:false,
-  alive:true
+  x: 150, y: 0, size: 36, vy: 0, jumpsLeft: 2, onGround: false, alive: true
 };
 
+// Game Object Arrays
 let platforms = [];
-let clouds = [];
+let clouds = []; 
 let mountainsFar = [];
 let mountainsNear = [];
-let birds = []; // NEW BIRDS
+let hills = []; 
+let birds = []; 
+let stars = []; 
 
+// Game Metrics & Control
 let speed = 260;
-let maxSpeed = 900;
-let runningTime = 0;
+const maxSpeed = 900;
+let score = 0;
+let starsCollected = 0; 
 let startDelay = true;
+let timeProgress = 0; // Value from 0.0 to 1.0 for day/night cycle progression
 
-const overlay = document.getElementById("centerOverlay");
-const deathScreen = document.getElementById("deathScreen");
+// Day/Night Cycle Configuration
+const CYCLE_MAX_SCORE = 7000;
+const MIDNIGHT_SCORE = 6700; 
 
+// Visual Constants
+const PLATFORM_BASE_COLOR = "#5d4037";
+const groundY = WORLD.height() - 140; // Fixed Y position for the main ground level
+const MOUNTAIN_SNOW_THRESHOLD_Y = WORLD.height() * 0.45; 
+const BIRD_COLORS = { 
+  common: ["#f0f8ff", "#808080", "#333333"], 
+  rare: ["#aeea00", "#ff0055", "#00ccff"]  
+}; 
+
+// --- UTILITY FUNCTIONS ---
+
+/** Generates a random number between a and b. */
 function rand(a,b){ return Math.random()*(b-a)+a; }
+/** Clamps a value v between a and b. */
 function clamp(v,a,b){ return Math.max(a,Math.min(b,v)); }
+/** Linearly interpolates between a and b by amount t. */
+function lerp(a, b, t) { return a + (b - a) * t; }
 
+/**
+ * Linearly interpolates between two colors (hex strings like "#RRGGBB").
+ */
+function lerpColor(a, b, amount) {
+    const ah = parseInt(a.replace('#', '0x'), 16),
+        ar = ah >> 16, ag = (ah >> 8) & 0xff, ab = ah & 0xff,
+        bh = parseInt(b.replace('#', '0x'), 16),
+        br = bh >> 16, bg = (bh >> 8) & 0xff, bb = bh & 0xff,
+        rr = ar + amount * (br - ar),
+        rg = ag + amount * (bg - ag),
+        rb = ab + amount * (bb - ab);
+    return '#' + ((1 << 24) + (rr << 16) + (rg << 8) + rb | 0).toString(16).slice(1).toUpperCase();
+}
+
+/**
+ * Calculates the X-coordinate where a line segment crosses a horizontal Y threshold.
+ */
+function interpolateX(x1, y1, x2, y2, thresholdY) {
+    const diffY = y2 - y1;
+    if (Math.abs(diffY) < 0.001) return x1; 
+    return x1 + (x2 - x1) * ((thresholdY - y1) / diffY);
+}
+
+/**
+ * Creates a jagged line of points between x1 and x2 at a base Y position.
+ */
+function generateJaggedLine(x1, y, x2, noiseAmount, step) {
+    let jaggedPoints = [];
+    let currentX = x1;
+    
+    // Start point
+    jaggedPoints.push({ x: x1, y: y + rand(-noiseAmount, noiseAmount) }); 
+
+    // Mid points
+    while (currentX < x2) {
+        currentX += step;
+        if (currentX < x2) {
+             jaggedPoints.push({ x: currentX, y: y + rand(-noiseAmount, noiseAmount) });
+        }
+    }
+
+    // End point
+    jaggedPoints.push({ x: x2, y: y + rand(-noiseAmount, noiseAmount) }); 
+    return jaggedPoints;
+}
+
+/**
+ * Generates the vertical profile points for a jagged mountain or hill.
+ */
+function generateJaggedPoly(width, minScreenY, maxScreenY, startScreenY, isHills = false) {
+    let points = [];
+    let steps = isHills ? 4 : 8; 
+    let segW = width / steps;
+    let currentY = startScreenY !== undefined ? startScreenY : rand(minScreenY, maxScreenY);
+    const maxChange = isHills ? 50 : 100;
+
+    points.push({x:0, y:currentY}); 
+
+    for(let i=1; i<=steps; i++){
+        let change = rand(-maxChange, maxChange);
+        currentY = clamp(currentY + change, minScreenY, maxScreenY); 
+        
+        points.push({ x: i*segW, y: currentY }); 
+    }
+    return points;
+}
+
+/**
+ * Initializes stable snow cap data for mountain peaks that exceed the snow threshold.
+ */
+function initializeSnow(mountain) {
+    const threshold = MOUNTAIN_SNOW_THRESHOLD_Y;
+    let profilePoints = mountain.points;
+    let allSnowData = [];
+    let currentSnowProfile = [];
+    let isBuildingProfile = false;
+    let peakStartAnchorX = -1;
+
+    // Check if any part of the mountain is high enough for snow
+    if (!profilePoints.some(p => p.y < threshold)) return null;
+
+    for(let i = 0; i < profilePoints.length - 1; i++){
+        const p_prev = profilePoints[i];
+        const p_current = profilePoints[i + 1];
+        const segmentIsAbove = p_prev.y < threshold || p_current.y < threshold;
+
+        if (!isBuildingProfile && segmentIsAbove) {
+            // Start of a new snow profile
+            isBuildingProfile = true;
+            currentSnowProfile = [];
+            
+            peakStartAnchorX = (p_prev.y >= threshold && p_current.y < threshold) 
+                ? interpolateX(p_prev.x, p_prev.y, p_current.x, p_current.y, threshold) 
+                : p_prev.x;
+        }
+
+        if (isBuildingProfile) {
+            // Detailed points for the snow cap profile
+            const numDensitySteps = 5; 
+            const stepX = (p_current.x - p_prev.x) / numDensitySteps;
+            
+            for(let j = 0; j <= numDensitySteps; j++) {
+                let currentX = p_prev.x + j * stepX;
+                let currentY = p_prev.y + (p_current.y - p_prev.y) * (j / numDensitySteps);
+                
+                if (currentY < threshold) currentSnowProfile.push({ x: currentX, y: currentY });
+            }
+            
+            if (p_prev.y < threshold && p_current.y >= threshold) {
+                // End of the snow profile
+                isBuildingProfile = false;
+                const peakEndAnchorX = interpolateX(p_prev.x, p_prev.y, p_current.x, p_current.y, threshold);
+                
+                // Generate jagged base line for the snow cap
+                const jaggedBase = generateJaggedLine(peakStartAnchorX, threshold, peakEndAnchorX, 10, 10);
+                
+                allSnowData.push({ snowProfile, jaggedBase });
+                currentSnowProfile = []; 
+                peakStartAnchorX = -1;
+            }
+        }
+    }
+    
+    // Handle case where the mountain profile ends before the snow cap does (off screen)
+    if (isBuildingProfile && currentSnowProfile.length > 0) {
+        const peakEndAnchorX = profilePoints[profilePoints.length - 1].x;
+        const jaggedBase = generateJaggedLine(peakStartAnchorX, threshold, peakEndAnchorX, 10, 10);
+
+        allSnowData.push({ snowProfile: currentSnowProfile, jaggedBase });
+    }
+
+    return allSnowData.length > 0 ? allSnowData : null;
+}
+
+// --- GAME OBJECT MANAGEMENT ---
+
+/** Spawns a new bird with a random color and flight parameters. */
 function spawnBird(){
-  birds.push({
-    x: WORLD.width() + rand(50,350),
-    y: rand(50, WORLD.height()*0.5),
-    speed: rand(60,120),
-    flap: 0
-  });
+  let isRare = Math.random() < 0.05;
+  let pool = isRare ? BIRD_COLORS.rare : BIRD_COLORS.common;
+  let color = pool[Math.floor(Math.random() * pool.length)];
+
+  birds.push({
+    x: WORLD.width() + rand(50,350),
+    y: rand(WORLD.height()*0.35, WORLD.height()*0.55), 
+    speed: rand(90,140),
+    flapTimer: 0,
+    frame: 0,
+    color: color
+  });
 }
 
+/** Spawns a collectable star just above a platform for running collection. */
+function spawnStar(p){
+    stars.push({
+        x: p.x + p.w / 2, // Center above platform
+        y: p.y - 18,        // Slightly above the platform top edge
+        size: 16,
+        rotation: rand(0, Math.PI * 2),
+        collected: false
+    });
+}
+
+/** Spawns a star in the gap between two platforms, requiring a jump to collect. */
+function spawnGapStar(p1, p2, gap){
+    let midY = (p1.y + p2.y) / 2;
+    // Y set to encourage a jump, but not impossibly high
+    let starY = clamp(midY - 80, WORLD.height() * 0.1, WORLD.height() - 200);
+
+    stars.push({
+        x: p1.x + p1.w + gap/2, // Center in the gap
+        y: starY,
+        size: 16,
+        rotation: rand(0, Math.PI * 2),
+        collected: false
+    });
+}
+
+/** Checks AABB collision between two square objects. */
+function checkCollision(objA, objB) {
+    // objA.size is full player size (square)
+    // objB.size is full star size (square bounding box)
+    return objA.x < objB.x + objB.size &&
+           objA.x + objA.size > objB.x &&
+           objA.y < objB.y + objB.size &&
+           objA.y + objA.size > objB.y;
+}
+
+// --- GAME LOGIC FUNCTIONS ---
+
+/**
+ * Initializes all game state and environment objects.
+ */
 function resetGame(){
-  platforms = [];
-  clouds = [];
-  mountainsFar = [];
-  mountainsNear = [];
-  birds = [];
+  // 1. Reset Game State
+  platforms = [];
+  clouds = []; 
+  mountainsFar = [];
+  mountainsNear = [];
+  hills = [];
+  birds = [];
+  stars = []; 
 
-  speed = 260;
-  runningTime = 0;
-  startDelay = true;
-  player.alive = true;
-  player.vy = 0;
-  player.jumpsLeft = 2;
+  speed = 260;
+  score = 0;
+  starsCollected = 0; 
+  timeProgress = 0; 
+  scoreBox.innerText = "SCORE: 0";
+  starBox.innerText = "STARS: 0"; 
+  
+  startDelay = true;
+  player.alive = true;
+  player.vy = 0;
+  player.jumpsLeft = 2;
+  deathSubtextElement.innerText = ""; 
 
-  // Mountains
-  for(let i=0;i<4;i++){
-    mountainsFar.push({
-      x: i*400,
-      y: WORLD.height()-220,
-      w: 360,
-      h: 180,
-      speed:0.25
-    });
-  }
-  for(let i=0;i<4;i++){
-    mountainsNear.push({
-      x: i*350,
-      y: WORLD.height()-160,
-      w: 260,
-      h:130,
-      speed:0.45
-    });
-  }
+  // 2. Initialize Parallax Layers (Mountains/Hills)
+  
+  // Far Mountains (Slowest Parallax)
+  const wFar = 800, maxHFar = WORLD.height() - 400, minHFar = WORLD.height() - 650;
+  let lastYFar = maxHFar - 150; 
+  for(let i=0; i<Math.ceil(WORLD.width()/wFar) + 2; i++){ 
+    let pts = generateJaggedPoly(wFar, minHFar, maxHFar, lastYFar);
+    lastYFar = pts[pts.length-1].y; 
+    let m = { x: i*wFar, w: wFar, points: pts, speed: 0.15 };
+    m.allSnowData = initializeSnow(m); 
+    mountainsFar.push(m);
+  }
 
-  // spawn some birds
-  for(let i=0;i<3;i++) spawnBird();
+  // Near Mountains
+  const wNear = 600, maxHNear = WORLD.height() - 250, minHNear = WORLD.height() - 450;
+  let lastYNear = maxHNear - 100;
+  for(let i=0; i<Math.ceil(WORLD.width()/wNear) + 2; i++){
+    let pts = generateJaggedPoly(wNear, minHNear, maxHNear, lastYNear);
+    lastYNear = pts[pts.length-1].y; 
+    mountainsNear.push({ x: i*wNear, w: wNear, points: pts, speed: 0.3 });
+  }
 
-  // Floor platform
-  let groundY = WORLD.height() - 140;
-  platforms.push({
-    x: player.x - 60,
-    y: groundY,
-    w: 500,
-    h: 18
-  });
+  // Foreground Hills (Fastest Parallax)
+  const wHills = 450, maxHHills = WORLD.height() - 100, minHHills = WORLD.height() - 180;
+  let lastYHills = maxHHills - 40;
+  for(let i=0; i<Math.ceil(WORLD.width()/wHills) + 2; i++){
+    let pts = generateJaggedPoly(wHills, minHHills, maxHHills, lastYHills, true); 
+    lastYHills = pts[pts.length-1].y; 
+    hills.push({ x: i*wHills, w: wHills, points: pts, speed: 0.6 });
+  }
 
-  // Spawn player ON platform
-  player.y = groundY - player.size;
+  // 3. Initialize Clouds & Birds
+  for(let i=0; i<12; i++){
+    clouds.push({
+      x: rand(0, WORLD.width()),
+      y: rand(20, WORLD.height()*0.45),
+      w: rand(80, 160),
+      h: rand(20, 50),
+      opacity: rand(0.4, 0.8),
+      speed: rand(10,30)
+    });
+  }
+  for(let i=0;i<3;i++) spawnBird();
 
-  // Initial platforms (longer now)
-  let cx = platforms[0].x + platforms[0].w + 60;
-  for(let i=0;i<6;i++){
-    let gap = rand(80,160);
-    let w = rand(260,480); // LONGER
-    let y = clamp(groundY + rand(-20,60), 70, WORLD.height()-80);
-    platforms.push({ x:cx+gap, y, w, h:18 });
-    cx += gap + w;
-  }
+  // 4. Initialize Platforms & Player Position
+  let initialPlatform = { x: player.x - 60, y: groundY, w: 500, h: 24 };
+  platforms.push(initialPlatform);
+  player.y = groundY - player.size;
 
-  // Clouds
-  for(let i=0;i<6;i++){
-    clouds.push({
-      x: rand(0, WORLD.width()),
-      y: rand(20, WORLD.height()*0.4),
-      scale: rand(0.7,1.3),
-      speed: rand(10,40)
-    });
-  }
+  // Generate initial set of platforms
+  let cx = platforms[0].x + platforms[0].w + 60;
+  for(let i=0;i<6;i++){
+    let gap = rand(100,220);
+    let w = rand(260,480);
+    let y = clamp(groundY + rand(-40,80), 70, WORLD.height()-80); 
+    let newPlatform = { x:cx+gap, y, w, h:24 };
+    
+    // Spawn gap star with a low chance
+    if (i > 0 && Math.random() < 0.1) {
+        spawnGapStar(platforms[platforms.length - 1], newPlatform, gap);
+    }
+    platforms.push(newPlatform);
+    cx += gap + w;
 
-  overlay.style.opacity = 1;
-  deathScreen.style.opacity = 0;
-  deathScreen.style.pointerEvents = "none";
+    // Spawn star on platform with a moderate chance
+    if (Math.random() < 0.3) spawnStar(newPlatform); 
+  }
+
+  // 5. Update UI
+  overlay.style.opacity = 1;
+  deathScreen.style.opacity = 0;
 }
 
+/**
+ * Updates the position and wraps the parallax background layers (mountains/hills).
+ */
+function updateMountains(list, width, speedMult, minH, maxH, isFar, dt){
+    // 1. Move mountains
+    for(const m of list) m.x -= speed * speedMult * dt;
+
+    // 2. Remove off-screen mountains
+    list = list.filter(m => m.x + m.w > 0); 
+
+    // 3. Spawn a new mountain if the screen is becoming empty
+    const lastM = list[list.length-1];
+    if(lastM.x + lastM.w < WORLD.width() + width * 0.25){ 
+        let startX = lastM.x + lastM.w - 4; // Ensures continuous joining
+        let startY = lastM.points[lastM.points.length-1].y; 
+        
+        const isHillsLayer = speedMult === 0.6; 
+        let newPts = generateJaggedPoly(width, minH, maxH, startY, isHillsLayer);
+        
+        let m = { x: startX, w: width, points: newPts, speed: speedMult };
+        if (isFar) m.allSnowData = initializeSnow(m); // Initialize snow for far mountains only
+        list.push(m);
+    }
+    return list; 
+}
+
+/**
+ * Updates the position and wraps the clouds.
+ */
+function updateClouds(dt){
+    for(const c of clouds){
+        // Clouds move at a fixed fraction of game speed plus their own inherent speed
+        c.x -= (startDelay ? 0 : speed * 0.12 + c.speed * 0.02) * dt; 
+        if(c.x + c.w < -100) c.x = WORLD.width() + 100; // Wrap cloud to the right side
+    }
+}
+
+/**
+ * Ensures a sufficient number of platforms are ahead of the player by spawning new ones.
+ */
 function ensurePlatforms(){
-  let right = -999;
-  for(const p of platforms) right = Math.max(right, p.x+p.w);
+  let right = -999;
+  // Find the rightmost edge of the existing platforms
+  for(const p of platforms) right = Math.max(right, p.x+p.w);
 
-  while(right < WORLD.width()+600){
-    const last = platforms[platforms.length-1];
-    const gap = rand(100,220);
-    const w = rand(260,480); // LONGER
-    const y = clamp(last.y + rand(-40,80), 70, WORLD.height()-80);
-    const newX = right + gap;
-    platforms.push({ x:newX, y, w, h:18 });
-    right = newX + w;
-  }
+  // Keep spawning new platforms until the field is covered far enough ahead
+  while(right < WORLD.width()+600){
+    const last = platforms[platforms.length-1];
+    const gap = rand(100,220);
+    const w = rand(260,480);
+    // Clamp Y ensures platforms don't spawn too high or too low
+    const y = clamp(last.y + rand(-40,80), 70, WORLD.height()-80); 
+    const newX = right + gap;
+    let newPlatform = { x:newX, y, w, h:24 };
+    
+    // Spawn gap star with a low chance
+    if (Math.random() < 0.1) {
+        spawnGapStar(last, newPlatform, gap);
+    }
+
+    platforms.push(newPlatform);
+    right = newX + w;
+
+    // Spawn platform star with a moderate chance
+    if(Math.random() < 0.3) { 
+        spawnStar(newPlatform);
+    }
+  }
 }
 
+/**
+ * Main game loop update function.
+ */
 function update(dt){
-  if(!player.alive) return;
+  if(!player.alive) return;
 
-  if(!startDelay){
-    runningTime += dt;
-    speed = Math.min(maxSpeed, speed + dt*30);
-  }
+  // --- 1. Game State & Metrics Update ---
+  if(!startDelay){
+    speed = Math.min(maxSpeed, speed + dt*10); // Gradually increase speed
+    score += (speed * dt) * 0.15; // Accumulate distance score
+    
+    // Day/Night Cycle progression (0.0 to 1.0)
+    timeProgress = (score % CYCLE_MAX_SCORE) / CYCLE_MAX_SCORE; 
+    
+    scoreBox.innerText = "SCORE: " + Math.floor(score);
+  }
 
-  // Mountains
-  for(const m of mountainsFar) m.x -= speed*m.speed*dt;
-  for(const m of mountainsNear) m.x -= speed*m.speed*dt;
+  // --- 2. Parallax & Environment Update ---
+  
+  // Update and wrap mountains (far, near, hills)
+  mountainsFar = updateMountains(mountainsFar, 800, 0.15, WORLD.height() - 650, WORLD.height() - 400, true, dt); 
+  mountainsNear = updateMountains(mountainsNear, 600, 0.3, WORLD.height() - 450, WORLD.height() - 250, false, dt);
+  hills = updateMountains(hills, 450, 0.6, WORLD.height() - 180, WORLD.height() - 100, false, dt); 
 
-  // Wrap mountains
-  for(const m of mountainsFar) if(m.x + m.w < -50) m.x += 400*4;
-  for(const m of mountainsNear) if(m.x + m.w < -50) m.x += 350*4;
+  updateClouds(dt); 
 
-  // Clouds
-  for(const c of clouds){
-    c.x -= (startDelay?0:speed*0.12 + c.speed*0.02)*dt;
-    if(c.x < -200) c.x = WORLD.width()+200;
-  }
+  // Update birds (movement, animation frame, respawn if necessary)
+  for(const b of birds){
+    b.x -= b.speed * dt;
+    b.flapTimer += dt * 6; 
+    b.frame = Math.floor(b.flapTimer) % 2;
+  }
+  birds = birds.filter(b => b.x > -200); // Remove off-screen birds
+  if(birds.length < 4) spawnBird();
 
-  // Birds
-  for(const b of birds){
-    b.x -= b.speed * dt;
-    b.flap += dt * 8;
-  }
-  // Replace birds off-screen
-  birds = birds.filter(b => b.x > -200);
-  if(birds.length < 4) spawnBird();
+  // Update platforms (scroll left)
+  for(const p of platforms) p.x -= startDelay ? 0 : speed*dt;
+  platforms = platforms.filter(p => p.x+p.w > -300); // Remove off-screen platforms
+  ensurePlatforms(); // Spawn new platforms on the right
 
-  // Platforms
-  for(const p of platforms) p.x -= startDelay ? 0 : speed*dt;
 
-  if(!startDelay){
-    player.vy += WORLD.gravity * dt;
-    player.y += player.vy * dt;
-  }
+  // --- 3. Collectable Stars Update ---
+  for(const s of stars) {
+      s.x -= startDelay ? 0 : speed * dt; // Scroll stars left
+      s.rotation += dt * 3; 
+      
+      // Collision check: Player (square) against Star (square bounding box)
+      let starAABB = {
+        x: s.x - s.size/2,
+        y: s.y - s.size/2,
+        size: s.size
+      };
+      if (checkCollision(player, starAABB)) {
+          starsCollected += 1; 
+          starBox.innerText = "STARS: " + starsCollected;
+          s.collected = true; 
+      }
+  }
+  // Filter out collected stars and those that have scrolled off screen
+  stars = stars.filter(s => s.x + s.size > -100 && !s.collected);
 
-  player.onGround = false;
 
-  // Platform collision
-  for(const p of platforms){
-    if(player.x+player.size > p.x && player.x < p.x+p.w){
-      let bottom = player.y + player.size;
-      let oldBottom = bottom - player.vy*dt;
-      if(oldBottom <= p.y && bottom >= p.y && player.vy>=0){
-        player.y = p.y - player.size;
-        player.vy = 0;
-        player.onGround = true;
-        player.jumpsLeft = 2;
-      }
-    }
-  }
+  // --- 4. Player Physics & Collision ---
+  if(!startDelay){
+    player.vy += WORLD.gravity * dt; // Apply gravity
+    player.y += player.vy * dt;     // Apply velocity
+  }
 
-  if(player.y > WORLD.height()+100){
-    player.alive = false;
-    deathScreen.style.opacity = 1;
-    deathScreen.style.pointerEvents = "auto";
-  }
+  player.onGround = false;
 
-  platforms = platforms.filter(p => p.x+p.w > -300);
-  ensurePlatforms();
+  for(const p of platforms){
+    // Broad X-axis check
+    if(player.x+player.size > p.x && player.x < p.x+p.w){
+      let bottom = player.y + player.size;
+      let oldBottom = bottom - player.vy*dt;
+      
+      // Landing check (check if player was above the platform and is now below/at)
+      if(oldBottom <= p.y + 5 && bottom >= p.y && player.vy>=0){
+        player.y = p.y - player.size; // Snap to the top of the platform
+        player.vy = 0;
+        player.onGround = true;
+        player.jumpsLeft = 2; // Reset jump count
+      }
+    }
+  }
+  
+  // --- 5. Death Condition ---
+  if(player.y > WORLD.height()+100){
+    player.alive = false;
+    deathScreen.style.opacity = 1;
+    deathScreen.style.pointerEvents = "auto"; // Re-enable interaction for restart
+    deathSubtextElement.innerText = "Tap/Space to Restart"; 
+  }
 }
 
-function drawBird(b){
-  ctx.save();
-  ctx.translate(b.x, b.y);
-  ctx.scale(1,1);
+// --- DRAWING FUNCTIONS ---
 
-  // flapping wings
-  let wing = Math.sin(b.flap) * 6;
+/**
+ * Draws a pixelated bird with a simple 2-frame flapping animation.
+ */
+function drawPixelBird(b){
+    ctx.save();
+    ctx.translate(b.x, b.y);
+    
+    const size = 4; // Base pixel size
+    
+    // Body (3x2 rect and 2x2 offset rect)
+    ctx.fillStyle = b.color; 
+    ctx.fillRect(0, 0, size*3, size*2);
+    ctx.fillRect(size*3, -size, size*2, size*2);
+    
+    // Beak
+    ctx.fillStyle = "#ff9800"; 
+    ctx.fillRect(size*5, -size, size, size);
+    
+    // Wing (2x2 rect, position depends on animation frame)
+    ctx.fillStyle = b.color;
+    ctx.globalAlpha = 0.85; 
+    if(b.frame === 0) ctx.fillRect(size, -size*2, size*2, size*2); // Wing up
+    else ctx.fillRect(size, size, size*2, size*2); // Wing down
 
-  ctx.strokeStyle = "#222";
-  ctx.lineWidth = 3;
-  ctx.beginPath();
-  ctx.moveTo(0,0);
-  ctx.quadraticCurveTo(-15, wing, -30, 0);
-  ctx.stroke();
-
-  ctx.beginPath();
-  ctx.moveTo(0,0);
-  ctx.quadraticCurveTo(15, wing, 30, 0);
-  ctx.stroke();
-
-  ctx.restore();
+    ctx.restore();
+    ctx.globalAlpha = 1.0; 
 }
 
+/**
+ * Draws a simple 4-pointed collectable star with a pulse effect.
+ */
+function drawStar(s, time){
+    ctx.save();
+    ctx.translate(s.x, s.y);
+    ctx.rotate(s.rotation);
+    
+    const size = s.size;
+    const pulse = Math.sin(time*5) * 2 + 1; 
+    const outerR = size + pulse;
+    const innerR = size * 0.4;
+    
+    ctx.fillStyle = "#ffd700"; // Gold
+    ctx.shadowColor = "#ffd700";
+    ctx.shadowBlur = 10;
+
+    // 4-pointed star shape
+    ctx.beginPath();
+    for(let i = 0; i < 4; i++){
+        const angle = i * (Math.PI / 2);
+        ctx.lineTo(outerR * Math.cos(angle), outerR * Math.sin(angle)); // Outer point
+        ctx.lineTo(innerR * Math.cos(angle + Math.PI / 4), innerR * Math.sin(angle + Math.PI / 4)); // Inner point
+    }
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.shadowBlur = 0;
+    ctx.restore();
+}
+
+/**
+ * Draws a mountain or hill layer polygon, including snow for the far mountains.
+ */
+function drawJaggedMountain(m, color, isFar){
+    let roundX = Math.round(m.x); 
+
+    // 1. Draw the base mountain polygon
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    // Move to bottom-left anchor point (World height)
+    ctx.moveTo(roundX, WORLD.height());
+    // Draw profile line segments
+    for(const p of m.points){
+        ctx.lineTo(roundX + p.x, p.y);
+    }
+    // Connect to bottom-right anchor point
+    ctx.lineTo(roundX + m.w, WORLD.height());
+    ctx.closePath();
+    ctx.fill();
+
+    // 2. Draw the Snow Cap (only for far mountains)
+    if(isFar && m.allSnowData && m.allSnowData.length > 0){
+        ctx.fillStyle = "white"; 
+
+        for (const snowCap of m.allSnowData) {
+            const { snowProfile, jaggedBase } = snowCap;
+
+            if (!snowProfile || snowProfile.length === 0 || !jaggedBase || jaggedBase.length === 0) continue;
+
+            ctx.beginPath();
+            // 1. Move to start of jagged base
+            ctx.moveTo(roundX + jaggedBase[0].x, jaggedBase[0].y); 
+            
+            // 2. Trace mountain profile to form the top snow line
+            for (const p of snowProfile) ctx.lineTo(roundX + p.x, p.y);
+            
+            // 3. Trace jagged base backwards to close the shape
+            for(let i = jaggedBase.length - 1; i >= 0; i--) {
+                 ctx.lineTo(roundX + jaggedBase[i].x, jaggedBase[i].y);
+            }
+            
+            ctx.closePath();
+            ctx.fill();
+        }
+    }
+}
+
+/**
+ * Draws the player square with a subtle glow.
+ */
+function drawPlayer(p){
+    ctx.fillStyle="#ffd42a";
+    ctx.fillRect(p.x, p.y, p.size, p.size);
+    
+    // Add subtle glow effect
+    ctx.shadowColor = "#e6ac00";
+    ctx.shadowBlur = 10;
+    ctx.strokeStyle = "rgba(255,255,255,0.4)";
+    ctx.lineWidth = 2;
+    ctx.strokeRect(p.x, p.y, p.size, p.size);
+    ctx.shadowBlur = 0; 
+}
+
+
+/**
+ * Main rendering loop function.
+ */
 function draw(){
-  // Improved sky gradient
-  let sky = ctx.createLinearGradient(0,0,0,WORLD.height());
-  sky.addColorStop(0,"#5fa0ff");
-  sky.addColorStop(0.4,"#4b8ce6");
-  sky.addColorStop(1,"#345fa8");
-  ctx.fillStyle = sky;
-  ctx.fillRect(0,0,WORLD.width(),WORLD.height());
+  // --- 1. Day/Night Cycle Color Calculation ---
+  let p = timeProgress;
+  
+  // Normalize time progress so that midnight occurs at the defined MIDNIGHT_SCORE
+  const midnightOffset = MIDNIGHT_SCORE / CYCLE_MAX_SCORE; 
+  const pShifted = (p + (1 - midnightOffset)) % 1; 
+  
+  // Interpolation Data
+  const SKY_COLORS = [
+    { p: 0.0, top: "#004e92", bottom: "#4ca1af" },      // Morning Blue
+    { p: 0.2, top: "#4a90e2", bottom: "#8bd0f7" },      // Mid-Day Lighter Blue
+    { p: 0.45, top: "#ff6b00", bottom: "#ffb457" },     // Sunset Orange
+    { p: 0.6, top: "#3a2a6b", bottom: "#1a1a4a" },      // Deep Twilight Purple/Blue
+    { p: 0.8, top: "#000033", bottom: "#1e3a8a" },      // Night Deep Blue
+    { p: 1.0, top: "#000000", bottom: "#0a0a2a" }       // Midnight Black/Purple
+  ];
 
-  // Sun glow
-  ctx.save();
-  let sunX = WORLD.width()*0.8;
-  let sunY = WORLD.height()*0.18;
-  let glow = ctx.createRadialGradient(sunX, sunY, 0, sunX, sunY, 180);
-  glow.addColorStop(0,"rgba(255,255,200,0.7)");
-  glow.addColorStop(1,"rgba(255,255,200,0)");
-  ctx.fillStyle = glow;
-  ctx.beginPath();
-  ctx.arc(sunX, sunY, 180, 0, Math.PI*2);
-  ctx.fill();
-  ctx.restore();
+  const MOUNTAIN_COLORS = [
+    { p: 0.0, far: "#2c3e50", near: "#34495e", hills: "#455a64" }, // Day
+    { p: 0.45, far: "#5a3a2a", near: "#6d4e3e", hills: "#806653" }, // Sunset
+    { p: 0.6, far: "#2d1c4b", near: "#3a2a6b", hills: "#4b3a8a" }, // Twilight
+    { p: 0.8, far: "#1a1a2e", near: "#282a4a", hills: "#3e4064" }, // Night
+    { p: 1.0, far: "#00000a", near: "#0a0a2a", hills: "#1a1a3a" }  // Midnight
+  ];
+  
+  // Calculate current interpolated colors
+  const calculateColor = (colors) => {
+    let index = 0;
+    while(index < colors.length - 1 && pShifted > colors[index+1].p) index++;
+    const start = colors[index];
+    const end = colors[Math.min(colors.length - 1, index + 1)];
+    const lerpAmount = (pShifted - start.p) / (end.p - start.p);
+    return { start, end, lerpAmount };
+  }
+  
+  const skyData = calculateColor(SKY_COLORS);
+  const currentSkyTop = lerpColor(skyData.start.top, skyData.end.top, skyData.lerpAmount);
+  const currentSkyBottom = lerpColor(skyData.start.bottom, skyData.end.bottom, skyData.lerpAmount);
 
-  // Mountains (far)
-  ctx.fillStyle = "#2f4c6b";
-  for(const m of mountainsFar){
-    ctx.beginPath();
-    ctx.moveTo(m.x, m.y+m.h);
-    ctx.lineTo(m.x+m.w*0.5, m.y);
-    ctx.lineTo(m.x+m.w, m.y+m.h);
-    ctx.fill();
-  }
+  const mtnData = calculateColor(MOUNTAIN_COLORS);
+  const farColor = lerpColor(mtnData.start.far, mtnData.end.far, mtnData.lerpAmount);
+  const nearColor = lerpColor(mtnData.start.near, mtnData.end.near, mtnData.lerpAmount);
+  const hillsColor = lerpColor(mtnData.start.hills, mtnData.end.hills, mtnData.lerpAmount);
 
-  // Mountains (near)
-  ctx.fillStyle = "#3c5d82";
-  for(const m of mountainsNear){
-    ctx.beginPath();
-    ctx.moveTo(m.x, m.y+m.h);
-    ctx.lineTo(m.x+m.w*0.5, m.y);
-    ctx.lineTo(m.x+m.w, m.y+m.h);
-    ctx.fill();
-  }
 
-  // Clouds
-  ctx.fillStyle="#fff";
-  for(const c of clouds){
-    ctx.beginPath();
-    ctx.ellipse(c.x,c.y,40*c.scale,20*c.scale,0,0,Math.PI*2);
-    ctx.ellipse(c.x+30*c.scale,c.y+3,25*c.scale,14*c.scale,0,0,Math.PI*2);
-    ctx.ellipse(c.x-25*c.scale,c.y+3,22*c.scale,12*c.scale,0,0,Math.PI*2);
-    ctx.fill();
-  }
+  // --- 2. Background Drawing ---
 
-  // Birds
-  for(const b of birds) drawBird(b);
+  // Sky Gradient
+  let sky = ctx.createLinearGradient(0,0,0,WORLD.height());
+  sky.addColorStop(0, currentSkyTop); 
+  sky.addColorStop(0.5, currentSkyBottom); 
+  // Lower portion of the sky blends towards a lighter shade (near-ground fog/haze)
+  sky.addColorStop(1, lerpColor(currentSkyBottom, "#ffffff", 0.5)); 
+  ctx.fillStyle = sky;
+  ctx.fillRect(0,0,WORLD.width(),WORLD.height());
 
-  // Platforms
-  for(const p of platforms){
-    ctx.fillStyle="#0c6b2e";
-    ctx.fillRect(p.x, p.y+10, p.w, 8);
-    ctx.fillStyle="#2ea044";
-    ctx.fillRect(p.x, p.y, p.w, 18);
-  }
+  // Sun/Moon (Calculated by path along the top half of the screen)
+  ctx.save();
+  
+  // Calculate Sun/Moon position (Horizontal path: 15% to 85% of width)
+  const sunMoonX = lerp(WORLD.width() * 0.15, WORLD.width() * 0.85, pShifted);
+  // Calculate vertical position using a parabola: low at edges (0.0, 1.0), high in middle (0.5)
+  const t = 1 - Math.abs(2 * pShifted - 1); // 0 -> 1 -> 0
+  const sunMoonY = lerp(WORLD.height() * 0.25, WORLD.height() * 0.15, t); // Low Y is high in sky
+  
+  const isNight = pShifted > 0.5;
+  let primaryColor = isNight ? "#ccccee" : "#fff"; // White/Moon or White/Sun
+  let glowColor = isNight ? "rgba(180, 200, 255, 0.4)" : "rgba(255, 255, 255, 0.4)";
+  
+  // Calculate fade (fades out near the horizon/edges of the cycle)
+  let fade = 1.0;
+  if (pShifted < 0.2 || pShifted > 0.8) { 
+      const proximityToHorizon = 1 - Math.abs(2 * pShifted - 1); 
+      fade = clamp(proximityToHorizon * 2, 0.1, 1.0);
+  }
+  
+  // Draw Glow
+  let glow = ctx.createRadialGradient(sunMoonX, sunMoonY, 20, sunMoonX, sunMoonY, 160);
+  glow.addColorStop(0, glowColor.replace('0.4', String(0.4 * fade)));
+  glow.addColorStop(1, glowColor.replace('0.4', '0'));
+  ctx.fillStyle = glow;
+  ctx.beginPath(); 
+  ctx.arc(sunMoonX, sunMoonY, 160, 0, Math.PI*2); 
+  ctx.fill();
+  
+  // Draw Sun/Moon body
+  ctx.fillStyle = primaryColor;
+  ctx.globalAlpha = fade;
+  ctx.beginPath(); ctx.arc(sunMoonX, sunMoonY, 30, 0, Math.PI*2); ctx.fill();
+  ctx.globalAlpha = 1.0;
 
-  // Player
-  ctx.fillStyle="#ffd42a";
-  ctx.fillRect(player.x, player.y, player.size, player.size);
+  ctx.restore();
+
+  // --- 3. Parallax Layers Drawing ---
+  
+  // Clouds (Opacity drops at night)
+  const cloudAlpha = lerp(1.0, 0.2, pShifted > 0.5 ? (pShifted - 0.5) * 2 : 0);
+  for(const c of clouds){
+    ctx.fillStyle = `rgba(255,255,255,${c.opacity * cloudAlpha})`;
+    ctx.fillRect(c.x, c.y, c.w, c.h);
+    // Small second rect for a more cloud-like shape
+    ctx.fillRect(c.x + 20, c.y - 15, c.w - 40, 20); 
+  }
+
+  // Mountains (Far layers are drawn first, then near layers)
+  for(const m of mountainsFar) drawJaggedMountain(m, farColor, true); 
+  for(const m of mountainsNear) drawJaggedMountain(m, nearColor, false); 
+  
+  // Birds (Drawn over mountains, under platforms)
+  for(const b of birds) drawPixelBird(b);
+
+  // Foreground Hills
+  for(const h of hills) drawJaggedMountain(h, hillsColor, false);
+
+  // Platforms (Drawn over hills)
+  for(const p of platforms){
+    ctx.fillStyle=PLATFORM_BASE_COLOR; // Brown base
+    ctx.fillRect(p.x, p.y, p.w, p.h);
+    ctx.fillStyle="#4caf50"; // Green top
+    ctx.fillRect(p.x, p.y, p.w, 6);
+    
+    // Outline
+    ctx.strokeStyle = "rgba(0,0,0,0.3)";
+    ctx.lineWidth = 2;
+    ctx.strokeRect(p.x, p.y, p.w, p.h);
+  }
+
+  // Collectable Stars (Drawn over platforms for visibility)
+  for(const s of stars) {
+      drawStar(s, gameTime);
+  }
+
+  // Player (Drawn last to be on top)
+  drawPlayer(player);
 }
 
+
+// --- INPUT HANDLERS & GAME LOOP ---
+
+/** * Handles player jump/start/restart logic. 
+ */
 function jump(){
-  if(!player.alive){
-    resetGame();
-    return;
-  }
-  if(startDelay){
-    // FIRST CLICK ONLY STARTS — NO JUMP
-    startDelay = false;
-    overlay.style.opacity = 0;
-    player.jumpsLeft = 2;
-    return;
-  }
-  if(player.jumpsLeft>0){
-    player.vy = -760;
-    player.jumpsLeft--;
-  }
+  if(!player.alive){
+    resetGame(); // Restart the game if player is dead
+    return;
+  }
+  if(startDelay){
+    startDelay = false;
+    overlay.style.opacity = 0; // Hide 'Tap/Space to Start' message
+    player.jumpsLeft = 2; // Ensure full jumps on start
+    return;
+  }
+  if(player.jumpsLeft>0){
+    player.vy = -760; // Set upward velocity for jump
+    player.jumpsLeft--;
+  }
 }
 
+/**
+ * Placeholder for the Hat Shop functionality.
+ */
+function openHatShop() {
+    if(player.alive) {
+        console.log(`--- HAT SHOP OPENED ---`);
+        console.log(`Current Stars: ${starsCollected}`);
+        console.log(`-----------------------`);
+        // Game pause and UI display logic would go here.
+    }
+}
+
+// Event Listeners for Input
 window.addEventListener("keydown", e=>{
-  if(["Space","ArrowUp","KeyW"].includes(e.code)){
-    e.preventDefault();
-    jump();
-  }
+  if(["Space","KeyW"].includes(e.code)){
+    e.preventDefault();
+    jump();
+  }
+  // 'H' keybind for the Hat Shop
+  if(e.code === "KeyH") {
+    e.preventDefault();
+    openHatShop();
+  }
 });
 window.addEventListener("pointerdown", jump);
 document.getElementById("touchButton").addEventListener("pointerdown", jump);
 
-let last = performance.now();
+/**
+ * Game animation loop.
+ */
 function loop(now){
-  const dt = Math.min(0.033, (now-last)/1000);
-  last = now;
-  update(dt);
-  draw();
-  requestAnimationFrame(loop);
+  // Calculate Delta Time (dt) and clamp to prevent spiral of death on lag spikes
+  const dt = Math.min(0.033, (now-last)/1000);
+  last = now;
+  
+  gameTime += dt; 
+  update(dt);
+  draw();
+  requestAnimationFrame(loop);
 }
 
+// Start the game
 resetGame();
 loop(performance.now());
 
