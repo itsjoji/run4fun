@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"/>
-<title>run4fun - Optimized</title>
+<title>run4fun</title>
 
 <style>
   :root {
@@ -11,6 +11,14 @@
     --text-font: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     --display-font: "Georgia", serif;
     --monospace: monospace;
+    
+    /* Fortnite Rarity Colors */
+    --rarity-common: #b0b0b0;    
+    --rarity-uncommon: #2ecc71;  
+    --rarity-rare: #00d4ff;      
+    --rarity-epic: #bd00ff;      
+    --rarity-legendary: #f39c12; 
+    --rarity-mythic: #f1c40f;    
   }
 
   html, body {
@@ -19,7 +27,9 @@
     background: var(--bg-color);
     overflow: hidden;
     font-family: var(--text-font);
-    touch-action: none; /* Prevents pinch-zoom/scroll on mobile */
+    touch-action: none; 
+    user-select: none;
+    -webkit-user-select: none;
   }
 
   canvas {
@@ -28,13 +38,12 @@
     height: 100vh;
   }
 
-  /* UI Overlays */
   .overlay-text {
     position: absolute;
     pointer-events: none;
     color: white;
     font-weight: bold;
-    text-shadow: 0 2px 4px rgba(0,0,0,0.6);
+    text-shadow: 2px 2px 0 #000;
     z-index: 10;
   }
 
@@ -44,27 +53,244 @@
     transform: translate(-50%, -50%);
     font-size: 30px;
     text-align: center;
-    text-shadow: 0 2px 4px rgba(0,0,0,0.5);
-    transition: opacity 0.3s ease;
     width: 100%;
+    transition: opacity 0.3s ease;
   }
 
-  #scoreBox {
-    top: 20px;
-    left: 20px;
-    font-size: 24px;
+  #scoreBox { top: 20px; left: 20px; font-size: 24px; font-family: var(--monospace); background: rgba(0,0,0,0.3); padding: 5px 10px; border-radius: 4px; }
+  #starBox { top: 65px; left: 20px; color: #ffd700; font-size: 20px; font-family: var(--monospace); background: rgba(0,0,0,0.3); padding: 5px 10px; border-radius: 4px; }
+
+  /* --- INTENSE RAINBOW MULTIPLIER TEXT --- */
+  #multiplierDisplay {
+    position: absolute;
+    top: 100px;
+    left: 50%;
+    transform: translateX(-50%) scale(0.8);
+    font-size: 50px; 
+    font-weight: 900;
+    font-family: "Impact", sans-serif;
+    text-transform: uppercase;
+    color: #ffd700; 
+    opacity: 0;
+    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    pointer-events: none;
+    z-index: 12;
+    animation: rainbow-glow 0.5s linear infinite; 
+    -webkit-text-stroke: 2px black;
+  }
+  
+  #multiplierDisplay.active {
+    opacity: 1;
+    transform: translateX(-50%) scale(1);
+  }
+
+  @keyframes rainbow-glow {
+    0% { text-shadow: 0 0 15px #ff0000; }
+    20% { text-shadow: 0 0 15px #ffff00; }
+    40% { text-shadow: 0 0 15px #00ff00; }
+    60% { text-shadow: 0 0 15px #00ffff; }
+    80% { text-shadow: 0 0 15px #0000ff; }
+    100% { text-shadow: 0 0 15px #ff00ff; }
+  }
+
+  #multiplierTimer {
+    font-size: 40px; /* Increased size for simple countdown */
+    text-align: center;
+    color: #fff;
+    text-shadow: 2px 2px 0 #000;
+    margin-top: 5px;
     font-family: var(--monospace);
+    font-weight: bold;
+    -webkit-text-stroke: 0;
+    animation: none;
   }
 
-  #starBox {
-    top: 50px;
-    left: 20px;
+  /* --- SHOP BUTTON --- */
+  #shopBtnContainer {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    z-index: 50;
+    cursor: pointer;
+    transition: transform 0.1s;
+    filter: drop-shadow(0 0 15px rgba(0,0,0,0.5));
+  }
+  #shopBtnContainer:active { transform: scale(0.95); }
+
+  #shopButton {
+    position: relative;
+    background: #000;
+    color: #fff;
+    font-family: "Impact", sans-serif;
+    font-size: 36px;
+    padding: 15px 35px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    overflow: hidden; 
+    border: none;
+    transform: skewX(-5deg);
+  }
+
+  #shopButton::before {
+    content: '';
+    position: absolute;
+    top: 50%; left: 50%;
+    width: 350px; height: 350px;
+    border-radius: 50%;
+    background: conic-gradient(#ff0000, #ff8000, #ffff00, #80ff00, #00ff00, #00ff80, #00ffff, #0080ff, #0000ff, #8000ff, #ff00ff, #ff0080, #ff0000);
+    animation: spin 2.5s linear infinite;
+    z-index: 0;
+    transform: translate(-50%, -50%);
+  }
+
+  #shopButton::after {
+    content: '';
+    position: absolute;
+    inset: 6px;
+    background: #000;
+    z-index: 0;
+  }
+
+  #shopButton span, #shopButton div {
+    position: relative;
+    z-index: 1;
+    transform: skewX(5deg);
+    text-shadow: 0 0 10px rgba(255,255,255,0.5);
+  }
+  
+  .btn-star { color: #ffff00; animation: pulse-star 0.5s infinite alternate; }
+
+  @keyframes spin {
+    from { transform: translate(-50%, -50%) rotate(0deg); }
+    to { transform: translate(-50%, -50%) rotate(360deg); }
+  }
+  @keyframes pulse-star {
+    from { transform: skewX(5deg) scale(1); }
+    to { transform: skewX(5deg) scale(1.3); }
+  }
+
+  /* --- SHOP MODAL --- */
+  #shopModal {
+    position: absolute;
+    inset: 0;
+    background: rgba(5, 5, 10, 0.98);
+    z-index: 100;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 20px;
+  }
+
+  #shopHeader {
+    font-family: "Impact", sans-serif;
+    font-size: 50px;
+    color: white;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+    text-shadow: 3px 3px 0 #bd00ff;
+    letter-spacing: 2px;
+  }
+
+  #currencyDisplay {
     color: #ffd700;
     font-size: 20px;
     font-family: var(--monospace);
+    margin-bottom: 40px;
+    padding: 8px 25px;
+    border: 1px solid #ffd700;
+    border-radius: 20px;
+    background: rgba(0,0,0,0.5);
+    box-shadow: 0 0 10px rgba(255, 215, 0, 0.2);
   }
 
-  /* Death Screen */
+  #itemsGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 25px;
+    width: 100%;
+    max-width: 900px;
+    padding: 20px;
+  }
+
+  .item-card {
+    background: linear-gradient(135deg, #2a2a3a, #151520);
+    border: 2px solid #333;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 15px;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    position: relative;
+    transform: skewX(-5deg);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    border-bottom-width: 5px;
+  }
+  
+  .item-card:hover {
+    transform: scale(1.05) skewX(-5deg);
+    border-color: white;
+    z-index: 2;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+  }
+
+  .item-card[data-rarity="common"] { border-bottom-color: var(--rarity-common); }
+  .item-card[data-rarity="uncommon"] { border-bottom-color: var(--rarity-uncommon); }
+  .item-card[data-rarity="rare"] { border-bottom-color: var(--rarity-rare); }
+  .item-card[data-rarity="epic"] { border-bottom-color: var(--rarity-epic); }
+  .item-card[data-rarity="legendary"] { border-bottom-color: var(--rarity-legendary); }
+  .item-card[data-rarity="mythic"] { border-bottom-color: var(--rarity-mythic); box-shadow: 0 0 20px var(--rarity-mythic); }
+
+  .item-card.equipped { border-color: #ffd700; box-shadow: 0 0 15px rgba(255, 215, 0, 0.6); }
+  .item-card.equipped::after {
+    content: 'EQUIPPED';
+    position: absolute;
+    top: -10px;
+    background: #ffd700;
+    color: black;
+    font-weight: bold;
+    font-size: 10px;
+    padding: 2px 8px;
+    transform: skewX(5deg);
+  }
+
+  .card-preview {
+    width: 110px;
+    height: 110px;
+    background: rgba(0,0,0,0.3);
+    margin-bottom: 15px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 4px;
+  }
+  .card-preview canvas { image-rendering: pixelated; width: 90px; height: 90px; }
+
+  .card-name { color: white; font-weight: 800; font-size: 16px; margin-bottom: 5px; text-align: center; text-transform: uppercase; }
+  .item-card[data-rarity="mythic"] .card-name { color: var(--rarity-mythic); }
+  .card-price { color: #ffd700; font-size: 14px; font-family: var(--monospace); font-weight: bold; }
+
+  #closeShop {
+    margin-top: 40px;
+    background: #b00;
+    color: white;
+    border: none;
+    padding: 15px 60px;
+    font-size: 24px;
+    font-family: "Impact", sans-serif;
+    cursor: pointer;
+    transform: skewX(-10deg);
+    transition: background 0.2s;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  #closeShop:hover { background: #d00; }
+
+  /* --- DEATH SCREEN --- */
   #deathScreen {
     position: absolute;
     inset: 0;
@@ -79,7 +305,6 @@
     font-family: var(--display-font);
     z-index: 20;
   }
-
   #deathTitle {
     font-size: 80px;
     font-weight: 700;
@@ -87,23 +312,11 @@
     text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0 0 10px rgba(0,0,0,0.8);
     letter-spacing: 15px;
     margin-bottom: 20px;
-    position: relative;
-    top: -30px;
-    padding-left: 15px;
     text-align: center;
   }
+  #deathSubtext { font-size: 24px; color: #e0d165; text-shadow: 0 1px 2px #000; letter-spacing: 2px; text-align: center; }
 
-  #deathSubtext {
-    font-size: 24px;
-    color: #e0d165;
-    text-shadow: 0 1px 2px #000;
-    letter-spacing: 2px;
-    position: relative;
-    top: -20px;
-    text-align: center;
-  }
-
-  /* Mobile Controls */
+  /* --- MOBILE CONTROLS --- */
   #touchButton {
     position: absolute;
     right: 20px;
@@ -123,12 +336,8 @@
     font-size: 24px;
   }
 
-  @media (min-width: 700px) {
-    #touchButton { display: none; }
-  }
-  @media (max-width: 600px) {
-      #deathTitle { font-size: 50px; letter-spacing: 5px; }
-  }
+  @media (min-width: 700px) { #touchButton { display: none; } }
+  @media (max-width: 600px) { #deathTitle { font-size: 50px; letter-spacing: 5px; } }
 </style>
 </head>
 
@@ -139,687 +348,975 @@
 <div id="starBox" class="overlay-text">STARS: 0</div> 
 <div id="centerOverlay" class="overlay-text">Tap / Space to Start</div>
 
+<div id="multiplierDisplay">
+  <div id="multiplierText">X2 STARS!</div>
+  <div id="multiplierTimer"></div> 
+</div>
+
+<div id="shopBtnContainer">
+  <button id="shopButton">
+    <div class="btn-star">★</div> <span>ITEM SHOP</span> <div class="btn-star">★</div>
+  </button>
+</div>
+
+<div id="shopModal">
+  <div id="shopHeader">Item Shop</div>
+  <div id="currencyDisplay">STARS: 0</div>
+  <div id="itemsGrid"></div>
+  <button id="closeShop">Back To Game</button>
+</div>
+
 <div id="deathScreen">
-    <div id="deathTitle">YOU DIED</div>
-    <div id="deathSubtext"></div> 
+  <div id="deathTitle">YOU DIED</div>
+  <div id="deathSubtext"></div> 
 </div>
 
 <div id="touchButton">▲</div>
 
 <script>
 (() => {
-    // --- CONSTANTS & CONFIGURATION ---
-    const CONSTANTS = {
-        PHYSICS: {
-            GRAVITY: 1800,
-            JUMP_FORCE: -760,
-            SPEED_START: 260,
-            SPEED_MAX: 900,
-            SPEED_INC: 10, 
-            SCORE_MULTIPLIER: 0.15
-        },
-        DIMENSIONS: {
-            PLAYER_SIZE: 36,
-            PLATFORM_HEIGHT: 24,
-            STAR_SIZE: 16,
-            GROUND_OFFSET: 140, 
-            DEATH_ZONE: 100    
-        },
-        GENERATION: {
-            PLATFORM_GAP: { MIN: 100, MAX: 220 },
-            PLATFORM_WIDTH: { MIN: 260, MAX: 480 },
-            PLATFORM_Y_VAR: { MIN: -40, MAX: 80 },
-            STAR_CHANCE: 0.3,
-            GAP_STAR_CHANCE: 0.1,
-            CYCLE_MAX_SCORE: 7000,
-            MIDNIGHT_SCORE: 6700
-        },
-        COLORS: {
-            PLATFORM_BASE: "#5d4037",
-            PLATFORM_TOP: "#4caf50",
-            PLAYER: "#ffd42a",
-            STAR: "#ffd700",
-            BIRDS_COMMON: ["#f0f8ff", "#808080", "#333333"],
-            BIRDS_RARE: ["#aeea00", "#ff0055", "#00ccff"]
-        }
-    };
-
-    // --- UTILITIES ---
-    class MathUtils {
-        static rand(a, b) { return Math.random() * (b - a) + a; }
-        static clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
-        static lerp(a, b, t) { return a + (b - a) * t; }
-        
-        static lerpColor(a, b, amount) {
-            const ah = parseInt(a.replace('#', '0x'), 16),
-                  ar = ah >> 16, ag = (ah >> 8) & 0xff, ab = ah & 0xff,
-                  bh = parseInt(b.replace('#', '0x'), 16),
-                  br = bh >> 16, bg = (bh >> 8) & 0xff, bb = bh & 0xff,
-                  rr = ar + amount * (br - ar),
-                  rg = ag + amount * (bg - ag),
-                  rb = ab + amount * (bb - ab);
-            return '#' + ((1 << 24) + (rr << 16) + (rg << 8) + rb | 0).toString(16).slice(1).toUpperCase();
-        }
-
-        static interpolateX(x1, y1, x2, y2, thresholdY) {
-            const diffY = y2 - y1;
-            if (Math.abs(diffY) < 0.001) return x1;
-            return x1 + (x2 - x1) * ((thresholdY - y1) / diffY);
-        }
-
-        static checkAABB(r1, r2) {
-            return r1.x < r2.x + r2.w &&
-                   r1.x + r1.w > r2.x &&
-                   r1.y < r2.y + r2.h &&
-                   r1.y + r1.h > r2.y;
-        }
+  // --- PIXEL ART DEFINITIONS ---
+  const PIXEL_ARTS = {
+    wizardMega: {
+      colors: { 1: "#673ab7", 2: "#4527a0", 3: "#ffd700" },
+      map: [
+        "00000000212000",
+        "00000000212000",
+        "0000002112000",
+        "00000021131200",
+        "00000021111200",
+        "00000211311200",
+        "00002111111200",
+        "00021311113120",
+        "00211111111120",
+        "02113333333120",
+        "21333333333312",
+        "11111111111111",
+        "13113111131131",
+        "11111111111111"
+      ]
+    },
+    crown: {
+      colors: { 1: "#f1c40f", 2: "#e74c3c" },
+      map: ["10101","10101","10101","11211","11111"]
+    },
+    // TRUCKER HAT FIX (Red front, white mesh back, red brim)
+    cap: {
+      colors: { 1: "#e74c3c", 2: "#ffffff" }, 
+      map: [
+        "0000011112222",
+        "0001111122222",
+        "0011111122222",
+        "0111111122222",
+        "1111111122222",
+        "1111111122222",
+        "1111111111111"
+      ]
+    },
+    devil: {
+      colors: { 1: "#c0392b", 2: "#fff" },
+      map: ["10001","10001","11011","00000"]
+    },
+    dunce: {
+      colors: { 1: "#ecf0f1", 2: "#000" },
+      map: ["0001000","0001000","0011100","0012100","0111110","1111111"]
+    },
+    tophat: {
+      colors: { 1: "#2c3e50", 2: "#c0392b", 3: "#34495e" },
+      map: [
+        "0111110",
+        "0111110",
+        "0111110",
+        "0111110",
+        "0222220",
+        "1111111",
+        "3111113"
+      ]
     }
+  };
+  
+  // --- FIXED MULTIPLIER PIXEL ART (Readable White Text) ---
+  const MULTIPLIER_ARTS = {
+    "2": {
+      colors: { 1: "#ffffff" },
+      map: [
+        "111000101",
+        "001000101",
+        "111000010",
+        "100000101",
+        "111000101"
+      ]
+    },
+    "3": {
+      colors: { 1: "#ffffff" },
+      map: [
+        "111000101",
+        "001000101",
+        "111000010",
+        "001000101",
+        "111000101"
+      ]
+    },
+    "5": {
+      colors: { 1: "#ffffff" },
+      map: [
+        "111000101",
+        "100000101",
+        "111000010",
+        "001000101",
+        "111000101"
+      ]
+    }
+  };
 
-    // --- ENTITIES ---
+  const SHOP_ITEMS = [
+    { id: 'dunce', name: 'Dunce Cap', price: 0, type: 'hat', rarity: 'common' },
+    { id: 'cap', name: 'Trucker Hat', price: 50, type: 'hat', rarity: 'uncommon' },
+    { id: 'tophat', name: 'Gentleman', price: 150, type: 'hat', rarity: 'rare' },
+    { id: 'devil', name: 'Lil\' Horns', price: 300, type: 'hat', rarity: 'epic' },
+    { id: 'crown', name: 'Victory Crown', price: 600, type: 'hat', rarity: 'legendary' },
+    { id: 'wizardMega', name: 'Grand Magus', price: 1500, type: 'hat', rarity: 'mythic' }
+  ];
 
-    class Player {
-        constructor(groundY) {
-            this.size = CONSTANTS.DIMENSIONS.PLAYER_SIZE;
-            this.x = 150;
-            this.y = groundY - this.size;
+  const CONSTANTS = {
+    PHYSICS: {
+      GRAVITY: 1800,
+      JUMP_FORCE: -760,
+      SPEED_START: 260,
+      SPEED_MAX: 900,
+      SPEED_INC: 8, // REDUCED RATE
+      SCORE_MULTIPLIER: 0.15
+    },
+    DIMENSIONS: {
+      PLAYER_SIZE: 36,
+      PLATFORM_HEIGHT: 24,
+      STAR_SIZE: 24, 
+      MULTIPLIER_SIZE: 28,
+      GROUND_OFFSET: 140, 
+      DEATH_ZONE: 100    
+    },
+    GENERATION: {
+      PLATFORM_GAP: { MIN: 100, MAX: 220 },
+      PLATFORM_WIDTH: { MIN: 260, MAX: 480 },
+      PLATFORM_Y_VAR: { MIN: -40, MAX: 80 },
+      STAR_CHANCE: 0.4, 
+      GAP_STAR_CHANCE: 0.1,
+      MULTIPLIER_CHANCE: 0.08, 
+      CYCLE_MAX_SCORE: 7000,
+      MIDNIGHT_SCORE: 6700
+    },
+    COLORS: {
+      PLATFORM_BASE: "#5d4037",
+      PLATFORM_TOP: "#4caf50",
+      PLAYER: "#ffd42a",
+      STAR: "#ffd700",
+      BIRDS_COMMON: ["#f0f8ff", "#808080", "#333333"],
+      BIRDS_RARE: ["#aeea00", "#ff0055", "#00ccff"]
+    }
+  };
+
+  class MathUtils {
+    static rand(a, b) { return Math.random() * (b - a) + a; }
+    static randInt(a, b) { return Math.floor(Math.random() * (b - a + 1)) + a; }
+    static clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+    static lerp(a, b, t) { return a + (b - a) * t; }
+    static lerpColor(a, b, amount) {
+      const ah = parseInt(a.replace('#', '0x'), 16),
+            ar = ah >> 16, ag = (ah >> 8) & 0xff, ab = ah & 0xff,
+            bh = parseInt(b.replace('#', '0x'), 16),
+            br = bh >> 16, bg = (bh >> 8) & 0xff, bb = bh & 0xff,
+            rr = ar + amount * (br - ar),
+            rg = ag + amount * (bg - ag),
+            rb = ab + amount * (bb - ab);
+      return '#' + ((1 << 24) + (rr << 16) + (rg << 8) + rb | 0).toString(16).slice(1).toUpperCase();
+    }
+    static checkAABB(r1, r2) {
+      return r1.x < r2.x + r2.w && r1.x + r1.w > r2.x && r1.y < r2.y + r2.h && r1.y + r1.h > r2.y;
+    }
+  }
+
+  class Player {
+    constructor(groundY) {
+      this.size = CONSTANTS.DIMENSIONS.PLAYER_SIZE;
+      this.x = 150;
+      this.y = groundY - this.size;
+      this.vy = 0;
+      this.jumpsLeft = 2;
+      this.onGround = true; 
+      this.alive = true;
+    }
+    update(dt, platforms, gravity) {
+      if (!this.alive) return;
+      this.vy += gravity * dt;
+      this.y += this.vy * dt;
+      this.onGround = false;
+      const playerBottom = this.y + this.size;
+      const playerRight = this.x + this.size;
+      for (const p of platforms) {
+        if (playerRight > p.x && this.x < p.x + p.w) {
+          const oldBottom = playerBottom - (this.vy * dt);
+          if (oldBottom <= p.y + 5 && playerBottom >= p.y && this.vy >= 0) {
+            this.y = p.y - this.size;
             this.vy = 0;
+            this.onGround = true;
             this.jumpsLeft = 2;
-            this.onGround = true; 
-            this.alive = true;
+          }
         }
+      }
+    }
+    jump() {
+      if (this.jumpsLeft > 0) {
+        this.vy = CONSTANTS.PHYSICS.JUMP_FORCE;
+        this.jumpsLeft--;
+      }
+    }
+  }
 
-        update(dt, platforms, gravity) {
-            if (!this.alive) return;
+  class TerrainGenerator {
+    static generatePoly(width, minScreenY, maxScreenY, startScreenY, isHills) {
+      let points = [];
+      let steps = isHills ? 4 : 8;
+      let segW = width / steps;
+      let currentY = startScreenY !== undefined ? startScreenY : MathUtils.rand(minScreenY, maxScreenY);
+      points.push({x:0, y:currentY});
+      for(let i=1; i<=steps; i++){
+        let change = isHills ? MathUtils.rand(-50, 50) : MathUtils.rand(-100, 100);
+        currentY = MathUtils.clamp(currentY + change, minScreenY, maxScreenY);
+        points.push({ x: i*segW, y: currentY });
+      }
+      return points;
+    }
+  }
 
-            this.vy += gravity * dt;
-            this.y += this.vy * dt;
-            this.onGround = false;
+  class DayNightCycle {
+    constructor() {
+       this.SKY_COLORS = [
+        { p: 0.0, top: "#004e92", bottom: "#4ca1af" },
+        { p: 0.2, top: "#4a90e2", bottom: "#8bd0f7" },
+        { p: 0.45, top: "#ff6b00", bottom: "#ffb457" },
+        { p: 0.6, top: "#3a2a6b", bottom: "#1a1a4a" },
+        { p: 0.8, top: "#000033", bottom: "#1e3a8a" },
+        { p: 1.0, top: "#000000", bottom: "#0a0a2a" }
+      ];
+      this.MTN_COLORS = [
+        { p: 0.0, far: "#2c3e50", near: "#34495e", hills: "#455a64" },
+        { p: 0.45, far: "#5a3a2a", near: "#6d4e3e", hills: "#806653" },
+        { p: 0.6, far: "#2d1c4b", near: "#3a2a6b", hills: "#4b3a8a" },
+        { p: 0.8, far: "#1a1a2e", near: "#282a4a", hills: "#3e4064" },
+        { p: 1.0, far: "#00000a", near: "#0a0a2a", hills: "#1a1a3a" }
+      ];
+    }
+    getColors(score) {
+      let p = (score % CONSTANTS.GENERATION.CYCLE_MAX_SCORE) / CONSTANTS.GENERATION.CYCLE_MAX_SCORE;
+      const offset = CONSTANTS.GENERATION.MIDNIGHT_SCORE / CONSTANTS.GENERATION.CYCLE_MAX_SCORE;
+      const pShifted = (p + (1 - offset)) % 1;
+      const getLerped = (arr) => {
+        let i = 0;
+        while(i < arr.length - 1 && pShifted > arr[i+1].p) i++;
+        const start = arr[i], end = arr[Math.min(arr.length-1, i+1)];
+        const t = (pShifted - start.p) / (end.p - start.p);
+        return { start, end, t };
+      };
+      const sky = getLerped(this.SKY_COLORS);
+      const mtn = getLerped(this.MTN_COLORS);
+      return {
+        skyTop: MathUtils.lerpColor(sky.start.top, sky.end.top, sky.t),
+        skyBottom: MathUtils.lerpColor(sky.start.bottom, sky.end.bottom, sky.t),
+        far: MathUtils.lerpColor(mtn.start.far, mtn.end.far, mtn.t),
+        near: MathUtils.lerpColor(mtn.start.near, mtn.end.near, mtn.t),
+        hills: MathUtils.lerpColor(mtn.start.hills, mtn.end.hills, mtn.t),
+        pShifted: pShifted
+      };
+    }
+  }
 
-            const playerBottom = this.y + this.size;
-            const playerRight = this.x + this.size;
+  class Game {
+    constructor() {
+      this.canvas = document.getElementById("game");
+      this.ctx = this.canvas.getContext("2d");
+      
+      this.ui = {
+        score: document.getElementById("scoreBox"),
+        stars: document.getElementById("starBox"),
+        overlay: document.getElementById("centerOverlay"),
+        death: document.getElementById("deathScreen"),
+        deathSub: document.getElementById("deathSubtext"),
+        btn: document.getElementById("touchButton"),
+        shopBtnContainer: document.getElementById("shopBtnContainer"),
+        shopModal: document.getElementById("shopModal"),
+        shopGrid: document.getElementById("itemsGrid"),
+        shopCurrency: document.getElementById("currencyDisplay"),
+        closeShop: document.getElementById("closeShop"),
+        multiplierDisplay: document.getElementById("multiplierDisplay"),
+        multiplierText: document.getElementById("multiplierText"),
+        multiplierTimer: document.getElementById("multiplierTimer")
+      };
+      
+      this.cycle = new DayNightCycle();
+      this.DPR = 1;
+      this.userData = this.loadData();
+      
+      this.resize = this.resize.bind(this);
+      this.loop = this.loop.bind(this);
+      this.handleInput = this.handleInput.bind(this);
+      this.toggleShop = this.toggleShop.bind(this);
 
-            for (const p of platforms) {
-                if (playerRight > p.x && this.x < p.x + p.w) {
-                    const oldBottom = playerBottom - (this.vy * dt);
-                    if (oldBottom <= p.y + 5 && playerBottom >= p.y && this.vy >= 0) {
-                        this.y = p.y - this.size;
-                        this.vy = 0;
-                        this.onGround = true;
-                        this.jumpsLeft = 2;
-                    }
-                }
-            }
-        }
+      window.addEventListener("resize", this.resize);
+      window.addEventListener("keydown", this.handleInput);
+      window.addEventListener("pointerdown", (e) => {
+        if(e.target.closest('#shopModal') || e.target.closest('#shopBtnContainer')) return;
+        this.handleInput({ type: 'pointer' });
+      });
+      this.ui.btn.addEventListener("pointerdown", (e) => { e.stopPropagation(); this.handleInput({ type: 'pointer' }); });
+      this.ui.shopBtnContainer.addEventListener("click", () => this.toggleShop(true));
+      this.ui.closeShop.addEventListener("click", () => this.toggleShop(false));
 
-        jump() {
-            if (this.jumpsLeft > 0) {
-                this.vy = CONSTANTS.PHYSICS.JUMP_FORCE;
-                this.jumpsLeft--;
-            }
-        }
+      this.initInternalDimensions();
+      this.reset();
+      
+      this.lastTime = performance.now();
+      this.gameTime = 0;
+      this.shopOpen = false;
+
+      this.updateShopUI();
+      requestAnimationFrame(this.loop);
     }
 
-    class TerrainGenerator {
-        static generateJaggedLine(x1, y, x2, noiseAmount, step) {
-            let points = [];
-            points.push({ x: x1, y: y + MathUtils.rand(-noiseAmount, noiseAmount) });
-            let currentX = x1;
-            while (currentX < x2) {
-                currentX += step;
-                if (currentX < x2) points.push({ x: currentX, y: y + MathUtils.rand(-noiseAmount, noiseAmount) });
-            }
-            points.push({ x: x2, y: y + MathUtils.rand(-noiseAmount, noiseAmount) });
-            return points;
-        }
-
-        static generatePoly(width, minScreenY, maxScreenY, startScreenY, isHills) {
-            let points = [];
-            let steps = isHills ? 4 : 8;
-            let segW = width / steps;
-            let currentY = startScreenY !== undefined ? startScreenY : MathUtils.rand(minScreenY, maxScreenY);
-            
-            points.push({x:0, y:currentY});
-            for(let i=1; i<=steps; i++){
-                let change = isHills ? MathUtils.rand(-50, 50) : MathUtils.rand(-100, 100);
-                currentY = MathUtils.clamp(currentY + change, minScreenY, maxScreenY);
-                points.push({ x: i*segW, y: currentY });
-            }
-            return points;
-        }
-
-        static initializeSnow(mountain, worldHeight) {
-            const threshold = worldHeight * 0.45;
-            if (!mountain.points.some(p => p.y < threshold)) return null;
-            let allSnow = [];
-            let curProfile = [];
-            let building = false;
-            let startX = -1;
-
-            for(let i = 0; i < mountain.points.length - 1; i++){
-                let p1 = mountain.points[i], p2 = mountain.points[i+1];
-                const segmentAbove = p1.y < threshold || p2.y < threshold;
-
-                if (!building && segmentAbove) {
-                    building = true;
-                    curProfile = [];
-                    startX = (p1.y >= threshold) ? MathUtils.interpolateX(p1.x, p1.y, p2.x, p2.y, threshold) : p1.x;
-                }
-                if (building) {
-                    const steps = 5, stepX = (p2.x - p1.x)/steps;
-                    for(let j=0; j<=steps; j++) {
-                        let cX = p1.x + j*stepX, cY = p1.y + (p2.y - p1.y)*(j/steps);
-                        if (cY < threshold) curProfile.push({x: cX, y: cY});
-                    }
-                    if (p1.y < threshold && p2.y >= threshold) {
-                        building = false;
-                        let endX = MathUtils.interpolateX(p1.x, p1.y, p2.x, p2.y, threshold);
-                        allSnow.push({ snowProfile: curProfile, jaggedBase: this.generateJaggedLine(startX, threshold, endX, 10, 10) });
-                        curProfile = [];
-                    }
-                }
-            }
-            if (building && curProfile.length > 0) {
-                let endX = mountain.points[mountain.points.length - 1].x;
-                allSnow.push({ snowProfile: curProfile, jaggedBase: this.generateJaggedLine(startX, threshold, endX, 10, 10) });
-            }
-            return allSnow.length ? allSnow : null;
-        }
+    loadData() {
+      const saved = localStorage.getItem('run4fun_save_v7');
+      return saved ? JSON.parse(saved) : { totalStars: 0, unlocked: ['dunce'], equipped: null };
     }
 
-    class DayNightCycle {
-        constructor() {
-             this.SKY_COLORS = [
-                { p: 0.0, top: "#004e92", bottom: "#4ca1af" },
-                { p: 0.2, top: "#4a90e2", bottom: "#8bd0f7" },
-                { p: 0.45, top: "#ff6b00", bottom: "#ffb457" },
-                { p: 0.6, top: "#3a2a6b", bottom: "#1a1a4a" },
-                { p: 0.8, top: "#000033", bottom: "#1e3a8a" },
-                { p: 1.0, top: "#000000", bottom: "#0a0a2a" }
-            ];
-            this.MTN_COLORS = [
-                { p: 0.0, far: "#2c3e50", near: "#34495e", hills: "#455a64" },
-                { p: 0.45, far: "#5a3a2a", near: "#6d4e3e", hills: "#806653" },
-                { p: 0.6, far: "#2d1c4b", near: "#3a2a6b", hills: "#4b3a8a" },
-                { p: 0.8, far: "#1a1a2e", near: "#282a4a", hills: "#3e4064" },
-                { p: 1.0, far: "#00000a", near: "#0a0a2a", hills: "#1a1a3a" }
-            ];
-        }
-
-        getColors(score) {
-            let p = (score % CONSTANTS.GENERATION.CYCLE_MAX_SCORE) / CONSTANTS.GENERATION.CYCLE_MAX_SCORE;
-            const offset = CONSTANTS.GENERATION.MIDNIGHT_SCORE / CONSTANTS.GENERATION.CYCLE_MAX_SCORE;
-            const pShifted = (p + (1 - offset)) % 1;
-
-            const getLerped = (arr) => {
-                let i = 0;
-                while(i < arr.length - 1 && pShifted > arr[i+1].p) i++;
-                const start = arr[i], end = arr[Math.min(arr.length-1, i+1)];
-                const t = (pShifted - start.p) / (end.p - start.p);
-                return { start, end, t };
-            };
-
-            const sky = getLerped(this.SKY_COLORS);
-            const mtn = getLerped(this.MTN_COLORS);
-
-            return {
-                skyTop: MathUtils.lerpColor(sky.start.top, sky.end.top, sky.t),
-                skyBottom: MathUtils.lerpColor(sky.start.bottom, sky.end.bottom, sky.t),
-                far: MathUtils.lerpColor(mtn.start.far, mtn.end.far, mtn.t),
-                near: MathUtils.lerpColor(mtn.start.near, mtn.end.near, mtn.t),
-                hills: MathUtils.lerpColor(mtn.start.hills, mtn.end.hills, mtn.t),
-                pShifted: pShifted
-            };
-        }
+    saveData() {
+      localStorage.setItem('run4fun_save_v7', JSON.stringify(this.userData));
+      this.updateShopUI();
     }
 
-    // --- GAME ENGINE ---
+    toggleShop(isOpen) {
+      this.shopOpen = isOpen;
+      this.ui.shopModal.style.display = isOpen ? 'flex' : 'none';
+      this.ui.shopBtnContainer.style.display = isOpen ? 'none' : 'block';
+      this.ui.multiplierDisplay.style.display = isOpen ? 'none' : 'block';
+      if(isOpen) this.updateShopUI();
+    }
 
-    class Game {
-        constructor() {
-            this.canvas = document.getElementById("game");
-            this.ctx = this.canvas.getContext("2d");
-            this.ui = {
-                score: document.getElementById("scoreBox"),
-                stars: document.getElementById("starBox"),
-                overlay: document.getElementById("centerOverlay"),
-                death: document.getElementById("deathScreen"),
-                deathSub: document.getElementById("deathSubtext"),
-                btn: document.getElementById("touchButton")
-            };
-            
-            this.cycle = new DayNightCycle();
-            this.DPR = 1;
-            
-            this.resize = this.resize.bind(this);
-            this.loop = this.loop.bind(this);
-            this.handleInput = this.handleInput.bind(this);
-            this.openShop = this.openShop.bind(this);
+    updateShopUI() {
+      this.ui.shopCurrency.innerText = "STARS: " + this.userData.totalStars;
+      this.ui.shopGrid.innerHTML = '';
 
-            window.addEventListener("resize", this.resize);
-            window.addEventListener("keydown", this.handleInput);
-            window.addEventListener("pointerdown", () => this.handleInput({ type: 'pointer' }));
-            this.ui.btn.addEventListener("pointerdown", (e) => { e.stopPropagation(); this.handleInput({ type: 'pointer' }); });
+      SHOP_ITEMS.forEach(item => {
+        const isOwned = this.userData.unlocked.includes(item.id);
+        const isEquipped = this.userData.equipped === item.id;
+        
+        const card = document.createElement('div');
+        card.className = `item-card ${isOwned ? 'owned' : ''} ${isEquipped ? 'equipped' : ''}`;
+        card.dataset.rarity = item.rarity;
+        
+        const cvs = document.createElement('canvas');
+        cvs.width = 90; cvs.height = 90; 
+        const ctx = cvs.getContext('2d');
+        ctx.imageSmoothingEnabled = false;
+        
+        const art = PIXEL_ARTS[item.id];
+        const scale = art.map.length > 10 ? 5 : 7;
+        this.drawPixelArt(ctx, 45, 45, art, scale, true);
 
-            this.initInternalDimensions(); // Initial size calculation
-            this.reset();
-            
-            this.lastTime = performance.now();
-            this.gameTime = 0;
-            requestAnimationFrame(this.loop);
+        card.innerHTML = `
+          <div class="card-preview"></div>
+          <div class="card-name">${item.name}</div>
+          <div class="card-price">${isOwned ? (isEquipped ? 'EQUIPPED' : 'OWNED') : item.price + ' Stars'}</div>
+        `;
+        card.querySelector('.card-preview').appendChild(cvs);
+        card.onclick = () => this.handleShopClick(item);
+        this.ui.shopGrid.appendChild(card);
+      });
+    }
+
+    handleShopClick(item) {
+      const isOwned = this.userData.unlocked.includes(item.id);
+      if (isOwned) {
+        this.userData.equipped = (this.userData.equipped === item.id) ? null : item.id;
+        this.saveData();
+      } else {
+        if (this.userData.totalStars >= item.price) {
+          this.userData.totalStars -= item.price;
+          this.userData.unlocked.push(item.id);
+          this.userData.equipped = item.id;
+          this.saveData();
+        } else {
+          const priceEl = document.querySelector(`.item-card[data-rarity="${item.rarity}"] .card-price`);
+          if(priceEl) {
+             const originalText = priceEl.innerText;
+             priceEl.innerText = "NEED MORE STARS!";
+             priceEl.style.color = "#ff0000";
+             setTimeout(() => {
+                 priceEl.innerText = originalText;
+                 priceEl.style.color = "#ffd700";
+             }, 1000);
+          }
         }
+      }
+    }
 
-        get groundY() { return this.height - CONSTANTS.DIMENSIONS.GROUND_OFFSET; }
+    get groundY() { return this.height - CONSTANTS.DIMENSIONS.GROUND_OFFSET; }
 
-        // Sets up dimensions without shifting entities (used on boot)
-        initInternalDimensions() {
-            this.DPR = window.devicePixelRatio || 1;
-            this.canvas.width = window.innerWidth * this.DPR;
-            this.canvas.height = window.innerHeight * this.DPR;
-            this.ctx.setTransform(this.DPR, 0, 0, this.DPR, 0, 0);
-            this.width = this.canvas.width / this.DPR;
-            this.height = this.canvas.height / this.DPR;
+    initInternalDimensions() {
+      this.DPR = window.devicePixelRatio || 1;
+      this.canvas.width = window.innerWidth * this.DPR;
+      this.canvas.height = window.innerHeight * this.DPR;
+      this.ctx.setTransform(this.DPR, 0, 0, this.DPR, 0, 0);
+      this.width = this.canvas.width / this.DPR;
+      this.height = this.canvas.height / this.DPR;
+    }
+
+    resize() {
+      const oldHeight = this.height;
+      this.initInternalDimensions();
+      const deltaY = this.height - oldHeight;
+      if (this.platforms) this.platforms.forEach(p => p.y += deltaY);
+      if (this.stars) this.stars.forEach(s => s.y += deltaY);
+      if (this.multipliers) this.multipliers.forEach(m => m.y += deltaY);
+      if (this.player) this.player.y += deltaY;
+      
+      const shiftMtn = (list) => { if(list) list.forEach(m => m.points.forEach(p => p.y += deltaY)); };
+      shiftMtn(this.mountains.far);
+      shiftMtn(this.mountains.near);
+      shiftMtn(this.mountains.hills);
+    }
+
+    reset() {
+      this.player = new Player(this.groundY);
+      this.speed = CONSTANTS.PHYSICS.SPEED_START;
+      this.score = 0;
+      this.runStars = 0;
+      this.startDelay = true;
+      
+      this.platforms = [];
+      this.stars = [];
+      this.multipliers = [];
+      this.particles = [];
+      // Reset multiplier value to 1, as the effect is now star spawning
+      this.activeMultiplier = { value: 1, timeLeft: 0 }; 
+      this.birds = [];
+      this.clouds = [];
+      this.mountains = { far: [], near: [], hills: [] };
+      
+      this.ui.score.innerText = "SCORE: 0";
+      this.ui.stars.innerText = "STARS: " + this.userData.totalStars;
+      this.ui.deathSub.innerText = "";
+      this.ui.overlay.style.opacity = 1;
+      this.ui.death.style.opacity = 0;
+      this.ui.death.style.pointerEvents = "none";
+      this.ui.shopBtnContainer.style.display = "block";
+      this.ui.multiplierDisplay.className = "";
+      this.ui.multiplierTimer.innerText = ""; // Clear timer text on reset
+
+      this.initWorld();
+    }
+
+    initWorld() {
+      const createLayer = (arr, w, minH, maxH, speed, isHills) => {
+        const count = Math.ceil(this.width / w) + 2;
+        let lastY = MathUtils.rand(minH, maxH);
+        for(let i=0; i<count; i++) {
+          let pts = TerrainGenerator.generatePoly(w, minH, maxH, lastY, isHills);
+          lastY = pts[pts.length-1].y;
+          arr.push({ x: i*w, w: w, points: pts, speed: speed });
         }
+      };
+      const H = this.height;
+      createLayer(this.mountains.far, 800, H-650, H-400, 0.15, false);
+      createLayer(this.mountains.near, 600, H-450, H-250, 0.3, false);
+      createLayer(this.mountains.hills, 450, H-180, H-100, 0.6, true);
 
-        // Smart resize: adjusts entity positions to keep them relative to ground
-        resize() {
-            const oldHeight = this.height;
-            this.initInternalDimensions(); // Update width/height
-            const newHeight = this.height;
-            
-            const deltaY = newHeight - oldHeight;
+      for(let i=0; i<12; i++) this.clouds.push(this.createCloud());
+      for(let i=0; i<3; i++) this.spawnBird();
 
-            // Shift World Entities so they don't jump or float
-            if (this.platforms) this.platforms.forEach(p => p.y += deltaY);
-            if (this.stars) this.stars.forEach(s => s.y += deltaY);
-            if (this.player) this.player.y += deltaY;
-            
-            // Mountains need complex shifting or they stretch. 
-            // Simple shift implies moving the points down.
-            const shiftMtn = (list) => {
-                if(!list) return;
-                list.forEach(m => {
-                    m.points.forEach(p => p.y += deltaY);
-                    if(m.snow) {
-                        m.snow.forEach(s => {
-                            s.snowProfile.forEach(sp => sp.y += deltaY);
-                            s.jaggedBase.forEach(jb => jb.y += deltaY);
-                        });
-                    }
-                });
-            };
-            shiftMtn(this.mountains.far);
-            shiftMtn(this.mountains.near);
-            shiftMtn(this.mountains.hills);
-        }
+      let initPlat = { x: this.player.x - 60, y: this.groundY, w: 500, h: CONSTANTS.DIMENSIONS.PLATFORM_HEIGHT };
+      this.platforms.push(initPlat);
+      let cx = initPlat.x + initPlat.w + 60;
+      for(let i=0; i<6; i++) cx = this.addPlatform(cx, i);
+    }
 
-        reset() {
-            this.player = new Player(this.groundY);
-            this.speed = CONSTANTS.PHYSICS.SPEED_START;
-            this.score = 0;
-            this.starsCollected = 0;
-            this.startDelay = true;
-            
-            this.platforms = [];
-            this.stars = [];
-            this.birds = [];
-            this.clouds = [];
-            this.mountains = { far: [], near: [], hills: [] };
-            
-            this.ui.score.innerText = "SCORE: 0";
-            this.ui.stars.innerText = "STARS: 0";
-            this.ui.deathSub.innerText = "";
-            this.ui.overlay.style.opacity = 1;
-            this.ui.death.style.opacity = 0;
-            this.ui.death.style.pointerEvents = "none";
+    createCloud() {
+      return {
+        x: MathUtils.rand(0, this.width),
+        y: MathUtils.rand(20, this.height * 0.45),
+        w: MathUtils.rand(80, 160),
+        h: MathUtils.rand(20, 50),
+        opacity: MathUtils.rand(0.4, 0.8),
+        speed: MathUtils.rand(10, 30)
+      };
+    }
 
-            this.initWorld();
-        }
+    spawnBird() {
+      let isRare = Math.random() < 0.05;
+      let pool = isRare ? CONSTANTS.COLORS.BIRDS_RARE : CONSTANTS.COLORS.BIRDS_COMMON;
+      this.birds.push({
+        x: this.width + MathUtils.rand(50, 350),
+        y: MathUtils.rand(this.height*0.35, this.height*0.55),
+        speed: MathUtils.rand(90, 140),
+        flapTimer: 0,
+        frame: 0,
+        color: pool[Math.floor(Math.random() * pool.length)]
+      });
+    }
 
-        initWorld() {
-            // Init Mountains
-            const createLayer = (arr, w, minH, maxH, speed, isHills) => {
-                const count = Math.ceil(this.width / w) + 2;
-                let lastY = MathUtils.rand(minH, maxH);
-                for(let i=0; i<count; i++) {
-                    let pts = TerrainGenerator.generatePoly(w, minH, maxH, lastY, isHills);
-                    lastY = pts[pts.length-1].y;
-                    let m = { x: i*w, w: w, points: pts, speed: speed };
-                    if(speed === 0.15) m.snow = TerrainGenerator.initializeSnow(m, this.height); 
-                    arr.push(m);
-                }
-            };
+    spawnParticles(x, y, color) {
+      for(let i=0; i<8; i++) {
+        this.particles.push({
+          x: x, y: y,
+          vx: MathUtils.rand(-150, 150),
+          vy: MathUtils.rand(-250, -50),
+          life: 0.6,
+          color: color
+        });
+      }
+    }
 
-            const H = this.height;
-            createLayer(this.mountains.far, 800, H-650, H-400, 0.15, false);
-            createLayer(this.mountains.near, 600, H-450, H-250, 0.3, false);
-            createLayer(this.mountains.hills, 450, H-180, H-100, 0.6, true);
+    addPlatform(startX, index) {
+      const G = CONSTANTS.GENERATION;
+      let gap = MathUtils.rand(G.PLATFORM_GAP.MIN, G.PLATFORM_GAP.MAX);
+      let w = MathUtils.rand(G.PLATFORM_WIDTH.MIN, G.PLATFORM_WIDTH.MAX);
+      let lastY = this.platforms.length ? this.platforms[this.platforms.length-1].y : this.groundY;
+      let y = MathUtils.clamp(lastY + MathUtils.rand(G.PLATFORM_Y_VAR.MIN, G.PLATFORM_Y_VAR.MAX), 70, this.height - 80);
+      let p = { x: startX + gap, y, w, h: CONSTANTS.DIMENSIONS.PLATFORM_HEIGHT };
+      
+      const tryMultiplier = (this.activeMultiplier.timeLeft <= 0) && (Math.random() < G.MULTIPLIER_CHANCE);
+      this.platforms.push(p);
 
-            // Init Clouds
-            for(let i=0; i<12; i++) this.clouds.push(this.createCloud());
-
-            // Init Birds
-            for(let i=0; i<3; i++) this.spawnBird();
-
-            // Init Platforms
-            let initPlat = { x: this.player.x - 60, y: this.groundY, w: 500, h: CONSTANTS.DIMENSIONS.PLATFORM_HEIGHT };
-            this.platforms.push(initPlat);
-            
-            let cx = initPlat.x + initPlat.w + 60;
-            for(let i=0; i<6; i++) cx = this.addPlatform(cx, i);
-        }
-
-        createCloud() {
-            return {
-                x: MathUtils.rand(0, this.width),
-                y: MathUtils.rand(20, this.height * 0.45),
-                w: MathUtils.rand(80, 160),
-                h: MathUtils.rand(20, 50),
-                opacity: MathUtils.rand(0.4, 0.8),
-                speed: MathUtils.rand(10, 30)
-            };
-        }
-
-        spawnBird() {
-            let isRare = Math.random() < 0.05;
-            let pool = isRare ? CONSTANTS.COLORS.BIRDS_RARE : CONSTANTS.COLORS.BIRDS_COMMON;
-            this.birds.push({
-                x: this.width + MathUtils.rand(50, 350),
-                y: MathUtils.rand(this.height*0.35, this.height*0.55),
-                speed: MathUtils.rand(90, 140),
-                flapTimer: 0,
-                frame: 0,
-                color: pool[Math.floor(Math.random() * pool.length)]
+      if (tryMultiplier) {
+        let r = Math.random();
+        let val = 2;
+        if (r < 0.1) val = 5;       
+        else if (r < 0.3) val = 3;  
+        
+        this.multipliers.push({
+          x: p.x + p.w/2, y: p.y - 25,
+          value: val,
+          duration: Math.round(MathUtils.rand(5, 10)),
+          collected: false
+        });
+      } else if (this.activeMultiplier.timeLeft > 0) {
+        // Star spawn effect if multiplier is active
+        const starCount = this.activeMultiplier.value;
+        const starSpacing = CONSTANTS.DIMENSIONS.STAR_SIZE * 2;
+        const totalStarWidth = starCount * starSpacing;
+        // Ensure stars fit and are within platform bounds (with some padding)
+        const maxOffset = p.w - totalStarWidth; 
+        if (maxOffset > 0) {
+          const startX = p.x + MathUtils.rand(20, maxOffset - 20); // Random starting point
+          for (let i = 0; i < starCount; i++) {
+            this.stars.push({ 
+              x: startX + i * starSpacing + (CONSTANTS.DIMENSIONS.STAR_SIZE / 2), 
+              y: p.y - 22, 
+              size: CONSTANTS.DIMENSIONS.STAR_SIZE, rotation: MathUtils.rand(0, Math.PI*2), collected: false,
+              collectAnim: { active: false, time: 0, startY: 0 }
             });
+          }
         }
+      } 
+      
+      // Normal star spawning logic (if no multiplier is active on the platform)
+      if (this.activeMultiplier.timeLeft <= 0 && Math.random() < G.STAR_CHANCE) {
+        this.stars.push({ 
+          x: p.x + p.w/2, y: p.y - 22, 
+          size: CONSTANTS.DIMENSIONS.STAR_SIZE, rotation: MathUtils.rand(0, Math.PI*2), collected: false,
+          collectAnim: { active: false, time: 0, startY: 0 }
+        });
+      }
 
-        addPlatform(startX, index) {
-            const G = CONSTANTS.GENERATION;
-            let gap = MathUtils.rand(G.PLATFORM_GAP.MIN, G.PLATFORM_GAP.MAX);
-            let w = MathUtils.rand(G.PLATFORM_WIDTH.MIN, G.PLATFORM_WIDTH.MAX);
-            // Ensure Y is clamped correctly within new height boundaries
-            let lastY = this.platforms.length ? this.platforms[this.platforms.length-1].y : this.groundY;
-            let y = MathUtils.clamp(lastY + MathUtils.rand(G.PLATFORM_Y_VAR.MIN, G.PLATFORM_Y_VAR.MAX), 70, this.height - 80);
-            
-            let p = { x: startX + gap, y, w, h: CONSTANTS.DIMENSIONS.PLATFORM_HEIGHT };
+      // Star in gap logic (unaffected by multiplier)
+      if (index > 0 && Math.random() < G.GAP_STAR_CHANCE) {
+        let prev = this.platforms[this.platforms.length-2]; // Corrected index after pushing p
+        let midY = (prev.y + p.y) / 2;
+        let starY = MathUtils.clamp(midY - 80, this.height * 0.1, this.height - 200);
+        this.stars.push({ 
+          x: prev.x + prev.w + gap/2, y: starY, 
+          size: CONSTANTS.DIMENSIONS.STAR_SIZE, rotation: 0, collected: false, 
+          collectAnim: { active: false, time: 0, startY: 0 } 
+        });
+      }
 
-            if (index > 0 && Math.random() < G.GAP_STAR_CHANCE) {
-                let prev = this.platforms[this.platforms.length-1];
-                let midY = (prev.y + p.y) / 2;
-                let starY = MathUtils.clamp(midY - 80, this.height * 0.1, this.height - 200);
-                this.stars.push({ x: prev.x + prev.w + gap/2, y: starY, size: CONSTANTS.DIMENSIONS.STAR_SIZE, rotation: 0, collected: false });
-            }
-
-            this.platforms.push(p);
-
-            if (Math.random() < G.STAR_CHANCE) {
-                this.stars.push({ x: p.x + p.w/2, y: p.y - 18, size: CONSTANTS.DIMENSIONS.STAR_SIZE, rotation: MathUtils.rand(0, Math.PI*2), collected: false });
-            }
-            return p.x + p.w;
-        }
-
-        handleInput(e) {
-            if (e.code === "KeyH") { e.preventDefault(); this.openShop(); return; }
-            
-            if (e.type === 'pointer' || ["Space", "KeyW"].includes(e.code)) {
-                if (e.preventDefault) e.preventDefault();
-                
-                if (!this.player.alive) {
-                    this.reset();
-                    return;
-                }
-                if (this.startDelay) {
-                    this.startDelay = false;
-                    this.ui.overlay.style.opacity = 0;
-                    this.player.jumpsLeft = 2;
-                    return;
-                }
-                this.player.jump();
-            }
-        }
-
-        openShop() {
-            if (this.player.alive) {
-                console.log(`--- HAT SHOP OPENED ---\nCurrent Stars: ${this.starsCollected}\n-----------------------`);
-            }
-        }
-
-        update(dt) {
-            if (!this.player.alive) return;
-
-            if (!this.startDelay) {
-                this.speed = Math.min(CONSTANTS.PHYSICS.SPEED_MAX, this.speed + dt * CONSTANTS.PHYSICS.SPEED_INC);
-                this.score += (this.speed * dt) * CONSTANTS.PHYSICS.SCORE_MULTIPLIER;
-                this.ui.score.innerText = "SCORE: " + Math.floor(this.score);
-            }
-
-            const scroll = this.startDelay ? 0 : this.speed * dt;
-            const H = this.height;
-            
-            // Mountains
-            const updateLayer = (list, w, speed, minH, maxH, isFar) => {
-                for(let m of list) m.x -= this.speed * speed * dt;
-                list = list.filter(m => m.x + m.w > 0);
-                const last = list[list.length-1];
-                if(last.x + last.w < this.width + w * 0.25) {
-                    let startY = last.points[last.points.length-1].y;
-                    let pts = TerrainGenerator.generatePoly(w, minH, maxH, startY, speed === 0.6);
-                    let m = { x: last.x + last.w - 4, w: w, points: pts, speed: speed };
-                    if(isFar) m.snow = TerrainGenerator.initializeSnow(m, H);
-                    list.push(m);
-                }
-                return list;
-            };
-
-            this.mountains.far = updateLayer(this.mountains.far, 800, 0.15, H-650, H-400, true);
-            this.mountains.near = updateLayer(this.mountains.near, 600, 0.3, H-450, H-250, false);
-            this.mountains.hills = updateLayer(this.mountains.hills, 450, 0.6, H-180, H-100, false);
-
-            // Clouds
-            for(let c of this.clouds) {
-                c.x -= (this.startDelay ? 0 : this.speed * 0.12 + c.speed * 0.02) * dt;
-                if(c.x + c.w < -100) c.x = this.width + 100;
-            }
-
-            // Birds
-            for(let b of this.birds) {
-                b.x -= b.speed * dt;
-                b.flapTimer += dt * 6;
-                b.frame = Math.floor(b.flapTimer) % 2;
-            }
-            this.birds = this.birds.filter(b => b.x > -200);
-            if(this.birds.length < 4) this.spawnBird();
-
-            // Platforms & Stars
-            for(let p of this.platforms) p.x -= scroll;
-            
-            for(let s of this.stars) {
-                s.x -= scroll;
-                s.rotation += dt * 3;
-                let starBox = { x: s.x - s.size/2, y: s.y - s.size/2, w: s.size, h: s.size };
-                let playerBox = { x: this.player.x, y: this.player.y, w: this.player.size, h: this.player.size };
-                if (MathUtils.checkAABB(playerBox, starBox)) {
-                    this.starsCollected++;
-                    this.ui.stars.innerText = "STARS: " + this.starsCollected;
-                    s.collected = true;
-                }
-            }
-            this.stars = this.stars.filter(s => s.x + s.size > -100 && !s.collected);
-            this.platforms = this.platforms.filter(p => p.x + p.w > -300);
-
-            let rightMost = -999;
-            for(let p of this.platforms) rightMost = Math.max(rightMost, p.x + p.w);
-            while(rightMost < this.width + 600) {
-                rightMost = this.addPlatform(rightMost, this.platforms.length);
-            }
-
-            // Player Physics
-            if (!this.startDelay) {
-                this.player.update(dt, this.platforms, CONSTANTS.PHYSICS.GRAVITY);
-            }
-
-            if (this.player.y > this.height + CONSTANTS.DIMENSIONS.DEATH_ZONE) {
-                this.player.alive = false;
-                this.ui.death.style.opacity = 1;
-                this.ui.death.style.pointerEvents = "auto";
-                this.ui.deathSub.innerText = "Tap/Space to Restart";
-            }
-        }
-
-        draw() {
-            const ctx = this.ctx;
-            const W = this.width;
-            const H = this.height;
-            const colors = this.cycle.getColors(this.score);
-
-            // 1. Sky
-            let grad = ctx.createLinearGradient(0, 0, 0, H);
-            grad.addColorStop(0, colors.skyTop);
-            grad.addColorStop(0.5, colors.skyBottom);
-            grad.addColorStop(1, MathUtils.lerpColor(colors.skyBottom, "#ffffff", 0.5));
-            ctx.fillStyle = grad;
-            ctx.fillRect(0, 0, W, H);
-
-            // 2. Celestial
-            this.drawCelestial(colors.pShifted);
-
-            // 3. Clouds
-            const cloudAlpha = MathUtils.lerp(1.0, 0.2, colors.pShifted > 0.5 ? (colors.pShifted - 0.5) * 2 : 0);
-            for(let c of this.clouds) {
-                ctx.fillStyle = `rgba(255,255,255,${c.opacity * cloudAlpha})`;
-                ctx.fillRect(c.x, c.y, c.w, c.h);
-                ctx.fillRect(c.x + 20, c.y - 15, c.w - 40, 20);
-            }
-
-            // 4. Mountains
-            const drawMtn = (list, color, hasSnow) => {
-                for(let m of list) {
-                    let rX = Math.round(m.x);
-                    ctx.fillStyle = color;
-                    ctx.beginPath();
-                    ctx.moveTo(rX, H);
-                    ctx.lineTo(rX + m.points[0].x, m.points[0].y);
-                    for(let i=1; i<m.points.length; i++) ctx.lineTo(rX + m.points[i].x, m.points[i].y);
-                    ctx.lineTo(rX + m.w, H);
-                    ctx.fill();
-
-                    if(hasSnow && m.snow) {
-                        ctx.fillStyle = "white";
-                        for(let s of m.snow) {
-                            ctx.beginPath();
-                            ctx.moveTo(rX + s.jaggedBase[0].x, s.jaggedBase[0].y);
-                            for(let p of s.snowProfile) ctx.lineTo(rX + p.x, p.y);
-                            for(let i=s.jaggedBase.length-1; i>=0; i--) ctx.lineTo(rX + s.jaggedBase[i].x, s.jaggedBase[i].y);
-                            ctx.fill();
-                        }
-                    }
-                }
-            };
-
-            drawMtn(this.mountains.far, colors.far, true);
-            drawMtn(this.mountains.near, colors.near, false);
-
-            // 5. Birds
-            for(let b of this.birds) {
-                ctx.save();
-                ctx.translate(b.x, b.y);
-                let s = 4;
-                ctx.fillStyle = b.color;
-                ctx.fillRect(0,0,s*3,s*2);
-                ctx.fillRect(s*3,-s,s*2,s*2);
-                ctx.fillStyle = "#ff9800";
-                ctx.fillRect(s*5,-s,s,s);
-                ctx.fillStyle = b.color;
-                ctx.globalAlpha = 0.85;
-                if(b.frame===0) ctx.fillRect(s,-s*2,s*2,s*2);
-                else ctx.fillRect(s,s,s*2,s*2);
-                ctx.restore();
-            }
-
-            drawMtn(this.mountains.hills, colors.hills, false);
-
-            // 6. Platforms
-            for(let p of this.platforms) {
-                ctx.fillStyle = CONSTANTS.COLORS.PLATFORM_BASE;
-                ctx.fillRect(p.x, p.y, p.w, p.h);
-                ctx.fillStyle = CONSTANTS.COLORS.PLATFORM_TOP;
-                ctx.fillRect(p.x, p.y, p.w, 6);
-                ctx.strokeStyle = "rgba(0,0,0,0.3)";
-                ctx.lineWidth = 2;
-                ctx.strokeRect(p.x, p.y, p.w, p.h);
-            }
-
-            // 7. Stars
-            for(let s of this.stars) {
-                ctx.save();
-                ctx.translate(s.x, s.y);
-                ctx.rotate(s.rotation);
-                const pulse = Math.sin(this.gameTime * 5) * 2 + 1;
-                const outR = s.size + pulse;
-                const inR = s.size * 0.4;
-                ctx.fillStyle = CONSTANTS.COLORS.STAR;
-                ctx.shadowColor = CONSTANTS.COLORS.STAR;
-                ctx.shadowBlur = 10;
-                ctx.beginPath();
-                for(let i=0; i<4; i++) {
-                    let a = i * (Math.PI/2);
-                    ctx.lineTo(outR * Math.cos(a), outR * Math.sin(a));
-                    ctx.lineTo(inR * Math.cos(a + Math.PI/4), inR * Math.sin(a + Math.PI/4));
-                }
-                ctx.fill();
-                ctx.shadowBlur = 0;
-                ctx.restore();
-            }
-
-            // 8. Player
-            const p = this.player;
-            ctx.fillStyle = CONSTANTS.COLORS.PLAYER;
-            ctx.fillRect(p.x, p.y, p.size, p.size);
-            ctx.shadowColor = "#e6ac00";
-            ctx.shadowBlur = 10;
-            ctx.strokeStyle = "rgba(255,255,255,0.4)";
-            ctx.lineWidth = 2;
-            ctx.strokeRect(p.x, p.y, p.size, p.size);
-            ctx.shadowBlur = 0;
-        }
-
-        drawCelestial(pShifted) {
-            const ctx = this.ctx;
-            const sunX = MathUtils.lerp(this.width * 0.15, this.width * 0.85, pShifted);
-            const t = 1 - Math.abs(2 * pShifted - 1);
-            const sunY = MathUtils.lerp(this.height * 0.25, this.height * 0.15, t);
-            const isNight = pShifted > 0.5;
-            
-            let primary = isNight ? "#ccccee" : "#fff";
-            let glowBase = isNight ? "rgba(180, 200, 255, 0.4)" : "rgba(255, 255, 255, 0.4)";
-            let fade = 1.0;
-            if (pShifted < 0.2 || pShifted > 0.8) {
-                fade = MathUtils.clamp((1 - Math.abs(2 * pShifted - 1)) * 2, 0.1, 1.0);
-            }
-
-            ctx.save();
-            let glow = ctx.createRadialGradient(sunX, sunY, 20, sunX, sunY, 160);
-            glow.addColorStop(0, glowBase.replace('0.4', String(0.4 * fade)));
-            glow.addColorStop(1, glowBase.replace('0.4', '0'));
-            ctx.fillStyle = glow;
-            ctx.beginPath(); ctx.arc(sunX, sunY, 160, 0, Math.PI*2); ctx.fill();
-            
-            ctx.fillStyle = primary;
-            ctx.globalAlpha = fade;
-            ctx.beginPath(); ctx.arc(sunX, sunY, 30, 0, Math.PI*2); ctx.fill();
-            ctx.restore();
-        }
-
-        loop(now) {
-            const dt = Math.min(0.033, (now - this.lastTime) / 1000);
-            this.lastTime = now;
-            this.gameTime += dt;
-            this.update(dt);
-            this.draw();
-            requestAnimationFrame(this.loop);
-        }
+      return p.x + p.w;
     }
 
-    new Game();
+    handleInput(e) {
+      if (this.shopOpen) return;
+      if (e.type === 'pointer' || ["Space", "KeyW"].includes(e.code)) {
+        if (e.preventDefault) e.preventDefault();
+        if (!this.player.alive) {
+          this.reset();
+          return;
+        }
+        if (this.startDelay) {
+          this.startDelay = false;
+          this.ui.overlay.style.opacity = 0;
+          this.ui.shopBtnContainer.style.display = "none";
+          this.player.jumpsLeft = 2;
+          return;
+        }
+        this.player.jump();
+      }
+    }
+
+    update(dt) {
+      if (this.shopOpen) return; 
+      if (!this.player.alive) return;
+
+      // Multiplier Logic
+      if (this.activeMultiplier.timeLeft > 0) {
+        this.activeMultiplier.timeLeft -= dt;
+        let secs = Math.ceil(this.activeMultiplier.timeLeft);
+        
+        // Timer update: simple countdown
+        this.ui.multiplierTimer.innerText = Math.max(0, secs); 
+        
+        if (this.activeMultiplier.timeLeft <= 0) {
+          this.activeMultiplier.value = 1;
+          this.activeMultiplier.timeLeft = 0;
+          this.ui.multiplierDisplay.className = "";
+          this.ui.multiplierTimer.innerText = "";
+        }
+      }
+
+      if (!this.startDelay) {
+        this.speed = Math.min(CONSTANTS.PHYSICS.SPEED_MAX, this.speed + dt * CONSTANTS.PHYSICS.SPEED_INC);
+        this.score += (this.speed * dt) * CONSTANTS.PHYSICS.SCORE_MULTIPLIER;
+        this.ui.score.innerText = "SCORE: " + Math.floor(this.score);
+      }
+
+      const scroll = this.startDelay ? 0 : this.speed * dt;
+      const H = this.height;
+      
+      const updateLayer = (list, w, speed, minH, maxH) => {
+        for(let m of list) m.x -= this.speed * speed * dt;
+        list = list.filter(m => m.x + m.w > 0);
+        const last = list[list.length-1];
+        if(last.x + last.w < this.width + w * 0.25) {
+          let startY = last.points[last.points.length-1].y;
+          let pts = TerrainGenerator.generatePoly(w, minH, maxH, startY, speed === 0.6);
+          list.push({ x: last.x + last.w - 4, w: w, points: pts, speed: speed });
+        }
+        return list;
+      };
+
+      this.mountains.far = updateLayer(this.mountains.far, 800, 0.15, H-650, H-400);
+      this.mountains.near = updateLayer(this.mountains.near, 600, 0.3, H-450, H-250);
+      this.mountains.hills = updateLayer(this.mountains.hills, 450, 0.6, H-180, H-100);
+
+      for(let c of this.clouds) {
+        c.x -= (this.startDelay ? 0 : this.speed * 0.12 + c.speed * 0.02) * dt;
+        if(c.x + c.w < -100) c.x = this.width + 100;
+      }
+
+      for(let b of this.birds) {
+        b.x -= b.speed * dt;
+        b.flapTimer += dt * 6;
+        b.frame = Math.floor(b.flapTimer) % 2;
+      }
+      this.birds = this.birds.filter(b => b.x > -200);
+      if(this.birds.length < 4) this.spawnBird();
+
+      for(let p of this.platforms) p.x -= scroll;
+      
+      // Update Multipliers
+      for(let m of this.multipliers) {
+        m.x -= scroll;
+        if (!m.collected) {
+          let box = { x: m.x - 14, y: m.y - 14, w: 28, h: 28 };
+          let playerBox = { x: this.player.x, y: this.player.y, w: this.player.size, h: this.player.size };
+          if (MathUtils.checkAABB(playerBox, box)) {
+            m.collected = true;
+            this.activeMultiplier = { value: m.value, timeLeft: m.duration };
+            this.ui.multiplierText.innerText = `X${m.value} STAR BONUS!`; // Updated text
+            this.ui.multiplierTimer.innerText = m.duration;
+            this.ui.multiplierDisplay.className = "active";
+            
+            // REMOVE ALL OTHER MULTIPLIERS
+            this.multipliers.forEach(other => other.collected = true);
+          }
+        }
+      }
+      this.multipliers = this.multipliers.filter(m => m.x > -100 && !m.collected);
+
+      // Update Stars
+      for(let s of this.stars) {
+        s.x -= scroll;
+        
+        if (s.collectAnim.active) {
+          // BIGGER BOUNCE
+          s.collectAnim.time += dt;
+          const t = s.collectAnim.time;
+          const gravity = 1200; 
+          const velocity = 600; 
+          const offset = (velocity * t) - (0.5 * gravity * t * t); 
+          s.y = s.collectAnim.startY - offset;
+          s.rotation += dt * 20; 
+        } else {
+           s.rotation += dt * 3;
+           let starBox = { x: s.x - s.size/2, y: s.y - s.size/2, w: s.size, h: s.size };
+           let playerBox = { x: this.player.x, y: this.player.y, w: this.player.size, h: this.player.size };
+           if (MathUtils.checkAABB(playerBox, starBox)) {
+             const val = 1; // Star value is always 1 now
+             this.runStars += val;
+             this.ui.stars.innerText = "STARS: " + (this.userData.totalStars + this.runStars);
+             
+             s.collected = true;
+             s.collectAnim.active = true;
+             s.collectAnim.startY = s.y;
+             
+             this.spawnParticles(s.x, s.y, CONSTANTS.COLORS.STAR);
+           }
+        }
+      }
+      this.stars = this.stars.filter(s => !s.collectAnim.active || s.collectAnim.time < 0.6);
+
+      // Update Particles
+      for (let p of this.particles) {
+        p.x += p.vx * dt;
+        p.y += p.vy * dt;
+        p.life -= dt;
+      }
+      this.particles = this.particles.filter(p => p.life > 0);
+
+      this.platforms = this.platforms.filter(p => p.x + p.w > -300);
+      let rightMost = -999;
+      for(let p of this.platforms) rightMost = Math.max(rightMost, p.x + p.w);
+      while(rightMost < this.width + 600) {
+        rightMost = this.addPlatform(rightMost, this.platforms.length);
+      }
+
+      if (!this.startDelay) {
+        this.player.update(dt, this.platforms, CONSTANTS.PHYSICS.GRAVITY);
+      }
+
+      if (this.player.y > this.height + CONSTANTS.DIMENSIONS.DEATH_ZONE) {
+        this.player.alive = false;
+        this.userData.totalStars += this.runStars;
+        this.saveData(); 
+        this.ui.death.style.opacity = 1;
+        this.ui.death.style.pointerEvents = "auto";
+        this.ui.deathSub.innerText = "Tap/Space to Restart";
+        this.ui.shopBtnContainer.style.display = "block";
+        this.ui.multiplierDisplay.className = "";
+        this.ui.multiplierTimer.innerText = "";
+      }
+    }
+
+    drawPixelArt(ctx, x, y, art, scale, centered = false) {
+      if (!art) return;
+      const rows = art.map.length;
+      const cols = art.map[0].length;
+      const w = cols * scale;
+      const h = rows * scale;
+      let startX = x;
+      let startY = y;
+      if (centered) { startX = x - w/2; startY = y - h/2; }
+
+      for(let r = 0; r < rows; r++) {
+        for(let c = 0; c < cols; c++) {
+          const pixel = art.map[r][c];
+          if(pixel !== '0') {
+            ctx.fillStyle = art.colors[pixel];
+            ctx.fillRect(Math.floor(startX + c * scale), Math.floor(startY + r * scale), Math.ceil(scale), Math.ceil(scale));
+          }
+        }
+      }
+    }
+    
+    drawSoftStar(ctx, x, y, size) {
+        const spikes = 5;
+        const outerRadius = size / 2;
+        const innerRadius = size / 4; 
+        let rot = Math.PI / 2 * 3;
+        let step = Math.PI / spikes;
+        
+        ctx.beginPath();
+        ctx.moveTo(x, y - outerRadius);
+        for (let i = 0; i < spikes; i++) {
+            let cx = x + Math.cos(rot) * outerRadius;
+            let cy = y + Math.sin(rot) * outerRadius;
+            ctx.quadraticCurveTo(cx, cy, cx, cy); 
+            
+            rot += step;
+            cx = x + Math.cos(rot) * innerRadius;
+            cy = y + Math.sin(rot) * innerRadius;
+            ctx.lineTo(cx, cy);
+            rot += step;
+            
+            cx = x + Math.cos(rot) * outerRadius;
+            cy = y + Math.sin(rot) * outerRadius;
+            ctx.lineTo(cx, cy);
+        }
+        ctx.closePath();
+    }
+
+    draw() {
+      const ctx = this.ctx;
+      const W = this.width;
+      const H = this.height;
+      const colors = this.cycle.getColors(this.score);
+
+      let grad = ctx.createLinearGradient(0, 0, 0, H);
+      grad.addColorStop(0, colors.skyTop);
+      grad.addColorStop(0.5, colors.skyBottom);
+      grad.addColorStop(1, MathUtils.lerpColor(colors.skyBottom, "#ffffff", 0.5));
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, W, H);
+
+      this.drawCelestial(colors.pShifted);
+
+      const cloudAlpha = MathUtils.lerp(1.0, 0.2, colors.pShifted > 0.5 ? (colors.pShifted - 0.5) * 2 : 0);
+      for(let c of this.clouds) {
+        ctx.fillStyle = `rgba(255,255,255,${c.opacity * cloudAlpha})`;
+        ctx.fillRect(c.x, c.y, c.w, c.h);
+        ctx.fillRect(c.x + 20, c.y - 15, c.w - 40, 20);
+      }
+
+      const drawMtn = (list, color) => {
+        for(let m of list) {
+          let rX = Math.round(m.x);
+          ctx.fillStyle = color;
+          ctx.beginPath();
+          ctx.moveTo(rX, H);
+          ctx.lineTo(rX + m.points[0].x, m.points[0].y);
+          for(let i=1; i<m.points.length; i++) ctx.lineTo(rX + m.points[i].x, m.points[i].y);
+          ctx.lineTo(rX + m.w, H);
+          ctx.fill();
+        }
+      };
+      drawMtn(this.mountains.far, colors.far);
+      drawMtn(this.mountains.near, colors.near);
+
+      for(let b of this.birds) {
+        ctx.save();
+        ctx.translate(b.x, b.y);
+        let s = 4;
+        ctx.fillStyle = b.color;
+        ctx.fillRect(0,0,s*3,s*2);
+        ctx.fillRect(s*3,-s,s*2,s*2);
+        ctx.fillStyle = "#ff9800";
+        ctx.fillRect(s*5,-s,s,s);
+        ctx.fillStyle = b.color;
+        ctx.globalAlpha = 0.85;
+        if(b.frame===0) ctx.fillRect(s,-s*2,s*2,s*2); else ctx.fillRect(s,s,s*2,s*2);
+        ctx.restore();
+      }
+
+      drawMtn(this.mountains.hills, colors.hills);
+
+      for(let p of this.platforms) {
+        ctx.fillStyle = CONSTANTS.COLORS.PLATFORM_BASE;
+        ctx.fillRect(p.x, p.y, p.w, p.h);
+        ctx.fillStyle = CONSTANTS.COLORS.PLATFORM_TOP;
+        ctx.fillRect(p.x, p.y, p.w, 6);
+        ctx.strokeStyle = "rgba(0,0,0,0.3)";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(p.x, p.y, p.w, p.h);
+      }
+
+      // Draw Pixel Art Multipliers
+      for (let m of this.multipliers) {
+        if(m.collected) continue;
+        ctx.save();
+        const floatY = m.y + Math.sin(this.gameTime * 4) * 5;
+        const art = MULTIPLIER_ARTS[m.value.toString()];
+        if (art) {
+            this.drawPixelArt(ctx, m.x, floatY, art, 4, true);
+        }
+        ctx.restore();
+      }
+
+      // Draw Stars (Soft)
+      for(let s of this.stars) {
+        ctx.save();
+        ctx.translate(s.x, s.y);
+        
+        if (s.collectAnim.active) {
+           ctx.rotate(s.rotation);
+           ctx.globalAlpha = MathUtils.clamp(1 - (s.collectAnim.time / 0.5), 0, 1);
+        } else {
+           ctx.rotate(s.rotation);
+        }
+        
+        ctx.fillStyle = CONSTANTS.COLORS.STAR;
+        ctx.shadowColor = CONSTANTS.COLORS.STAR;
+        ctx.shadowBlur = s.collectAnim.active ? 0 : 10;
+        ctx.lineJoin = "round";
+        ctx.lineWidth = 4; 
+        
+        this.drawSoftStar(ctx, 0, 0, s.size + (s.collectAnim.active ? 0 : Math.sin(this.gameTime*5)*2));
+        ctx.fill();
+        ctx.restore();
+      }
+
+      // Draw Particles
+      for (let p of this.particles) {
+        ctx.fillStyle = p.color;
+        ctx.globalAlpha = p.life / 0.6;
+        ctx.fillRect(p.x, p.y, 4, 4);
+        ctx.globalAlpha = 1;
+      }
+
+      const p = this.player;
+      ctx.fillStyle = CONSTANTS.COLORS.PLAYER;
+      ctx.fillRect(p.x, p.y, p.size, p.size);
+      ctx.shadowColor = "#e6ac00";
+      ctx.shadowBlur = 10;
+      ctx.strokeStyle = "rgba(255,255,255,0.4)";
+      ctx.lineWidth = 2;
+      ctx.strokeRect(p.x, p.y, p.size, p.size);
+      ctx.shadowBlur = 0;
+
+      if (this.userData.equipped && PIXEL_ARTS[this.userData.equipped]) {
+        const art = PIXEL_ARTS[this.userData.equipped];
+        const scale = art.map.length > 10 ? 3 : 4;
+        const hatWidth = art.map[0].length * scale;
+        const hatHeight = art.map.length * scale;
+        const drawX = p.x + (p.size / 2) - (hatWidth / 2);
+        const drawY = p.y - hatHeight;
+        this.drawPixelArt(ctx, drawX, drawY, art, scale, false);
+      }
+    }
+
+    drawCelestial(pShifted) {
+      const ctx = this.ctx;
+      const sunX = MathUtils.lerp(this.width * 0.15, this.width * 0.85, pShifted);
+      const t = 1 - Math.abs(2 * pShifted - 1);
+      const sunY = MathUtils.lerp(this.height * 0.25, this.height * 0.15, t);
+      const isNight = pShifted > 0.5;
+      
+      let primary = isNight ? "#ccccee" : "#fff";
+      let glowBase = isNight ? "rgba(180, 200, 255, 0.4)" : "rgba(255, 255, 255, 0.4)";
+      let fade = 1.0;
+      if (pShifted < 0.2 || pShifted > 0.8) {
+        fade = MathUtils.clamp((1 - Math.abs(2 * pShifted - 1)) * 2, 0.1, 1.0);
+      }
+
+      ctx.save();
+      let glow = ctx.createRadialGradient(sunX, sunY, 20, sunX, sunY, 160);
+      glow.addColorStop(0, glowBase.replace('0.4', String(0.4 * fade)));
+      glow.addColorStop(1, glowBase.replace('0.4', '0'));
+      ctx.fillStyle = glow;
+      ctx.beginPath(); ctx.arc(sunX, sunY, 160, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle = primary;
+      ctx.globalAlpha = fade;
+      ctx.beginPath(); ctx.arc(sunX, sunY, 30, 0, Math.PI*2); ctx.fill();
+      ctx.restore();
+    }
+
+    loop(now) {
+      const dt = Math.min(0.033, (now - this.lastTime) / 1000);
+      this.lastTime = now;
+      if (!this.shopOpen) this.gameTime += dt;
+      this.update(dt);
+      this.draw();
+      requestAnimationFrame(this.loop);
+    }
+  }
+
+  new Game();
 })();
 </script>
 </body>
