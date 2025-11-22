@@ -64,7 +64,6 @@
   #hud-stars { border-left-color: #ffd700; color: #ffd700; }
   .hud-icon { width: 20px; text-align: center; }
 
-  /* CELESTIAL POCKET WATCH STYLE */
   #clock-canvas {
     width: 80px; height: 80px;
     image-rendering: pixelated;
@@ -190,7 +189,7 @@
   }
   #shop-close:hover { background: #d00; }
 
-  /* --- DEATH SCREEN (DARK SOULS STYLE) --- */
+  /* --- DEATH SCREEN --- */
   #death-screen {
     position: absolute; inset: 0; display: flex; flex-direction: column;
     justify-content: center; align-items: center; background: black;
@@ -210,18 +209,10 @@
     transition: transform 3s ease-out, opacity 1s;
     opacity: 0;
   }
-  #death-screen.active #death-title {
-    transform: scale(1);
-    opacity: 1;
-  }
+  #death-screen.active #death-title { transform: scale(1); opacity: 1; }
   #death-sub { 
-    font-family: "Times New Roman", serif;
-    font-size: 24px; 
-    color: #888; 
-    letter-spacing: 2px; 
-    text-align: center;
-    margin-top: 20px;
-    text-transform: uppercase;
+    font-family: "Times New Roman", serif; font-size: 24px; color: #888; 
+    letter-spacing: 2px; text-align: center; margin-top: 20px; text-transform: uppercase;
   }
 
   /* --- PAUSE SCREEN --- */
@@ -246,16 +237,13 @@
   }
   .cheat-row { display: flex; justify-content: space-between; align-items: center; }
   .cheat-input { background: #222; color: #0f0; border: 1px solid #555; padding: 5px; width: 100px; font-family: monospace; }
-  /* Hide spin buttons */
-  .cheat-input::-webkit-outer-spin-button,
-  .cheat-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  .cheat-input::-webkit-outer-spin-button, .cheat-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
   .cheat-input { -moz-appearance: textfield; }
-  
   .cheat-check { width: 20px; height: 20px; }
   #cheat-close { margin-top: 10px; background: #ffd700; color: black; border: none; padding: 10px; font-weight: bold; cursor: pointer; text-transform: uppercase; }
   #cheat-close:hover { background: #fff; }
 
-  /* --- CRACK MODE POPUP (WIN 95 STYLE) --- */
+  /* --- CRACK MODE POPUP --- */
   .win-popup {
     position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
     width: 320px; background: #c0c0c0; border: 2px solid;
@@ -305,7 +293,6 @@
     background: radial-gradient(circle, transparent 50%, black 100%);
   }
 
-  /* --- MOBILE CONTROLS --- */
   #touch-btn {
     position: absolute; right: 20px; bottom: 20px; width: 75px; height: 75px;
     border-radius: 50%; background: #ffd42a; display: flex; align-items: center; justify-content: center;
@@ -463,7 +450,7 @@
   };
 
   const StorageManager = {
-    KEY: 'run4fun_save_v9',
+    KEY: 'run4fun_save_v10',
     load: () => {
       try { 
           let data = JSON.parse(localStorage.getItem(StorageManager.KEY));
@@ -475,7 +462,6 @@
     save: (data) => localStorage.setItem(StorageManager.KEY, JSON.stringify(data))
   };
 
-  /** GRAPHICS CACHE */
   const AssetFactory = {
     cache: {},
     init() {
@@ -510,19 +496,17 @@
           this.mapH = 24;
           this.map = [];
           this.texSize = 64;
-          this.player = { x: 12, y: 12, dir: 0, pitch: 0, plane: {x:0, y:0.8} }; // Increased FOV
+          this.player = { x: 12, y: 12, dir: 0, pitch: 0, plane: {x:0, y:0.84} }; // FOV ~80deg
           this.flashlightOn = true;
           
-          // Inventory
           this.inventory = [
-              {id: 'gun', name: 'Pistol'}, 
-              {id: 'knife', name: 'Knife'}, 
-              {id: 'flashlight', name: 'Flashlight'}
+              {id: 'gun', name: 'Glock-19'}, 
+              {id: 'knife', name: 'Kitchen Knife'}, 
+              {id: 'flashlight', name: 'Hvy Flashlight'}
           ];
           this.activeSlot = 0;
-          this.offHand = null;
 
-          // Generate simple maze
+          // Maze
           for(let y=0; y<this.mapH; y++) {
               let row = [];
               for(let x=0; x<this.mapW; x++) {
@@ -536,12 +520,11 @@
           window.addEventListener('keydown', e => this.key(e, true));
           window.addEventListener('keyup', e => this.key(e, false));
           
-          // Mouse Look
           document.addEventListener("mousemove", (e) => {
               if(document.pointerLockElement === this.cvs) {
-                  this.player.dir += e.movementX * 0.002;
+                  this.player.dir -= e.movementX * 0.002; // Reversed X
                   this.player.pitch -= e.movementY * 2;
-                  this.player.pitch = Math.max(-200, Math.min(200, this.player.pitch));
+                  this.player.pitch = Math.max(-300, Math.min(300, this.player.pitch)); // Clamp Look
               }
           });
       }
@@ -563,7 +546,6 @@
       update(dt) {
           const moveSpeed = 5.0 * dt;
           
-          // Strafe calculation
           const dx = Math.cos(this.player.dir) * moveSpeed;
           const dy = Math.sin(this.player.dir) * moveSpeed;
           const sx = Math.cos(this.player.dir + Math.PI/2) * moveSpeed;
@@ -573,8 +555,8 @@
           
           if(this.keys.w) { nx += dx; ny += dy; }
           if(this.keys.s) { nx -= dx; ny -= dy; }
-          if(this.keys.d) { nx += sx; ny += sy; }
-          if(this.keys.a) { nx -= sx; ny -= sy; }
+          if(this.keys.a) { nx -= sx; ny -= sy; } // Swap A/D
+          if(this.keys.d) { nx += sx; ny += sy; } 
           
           if(this.map[Math.floor(ny)][Math.floor(this.player.x)] === 0) this.player.y = ny;
           if(this.map[Math.floor(this.player.y)][Math.floor(nx)] === 0) this.player.x = nx;
@@ -629,20 +611,27 @@
               const lineHeight = Math.floor(h / perpWallDist);
               const drawStart = -lineHeight / 2 + h / 2 + this.player.pitch;
               
-              // Wall Lighting Logic
+              // Lighting
               let baseColor = side === 1 ? 100 : 140;
-              
-              // Flashlight cone logic
               let lightIntensity = 0;
+              
               if(this.flashlightOn) {
-                  // Simple distance falloff
-                  lightIntensity = Math.max(0, 300 - perpWallDist * 40);
-                  // Center focus
-                  const centerDist = Math.abs(x - w/2);
-                  if(centerDist > 100) lightIntensity *= 0.5;
+                  // Calculate radial distance from center screen
+                  const centerX = w/2;
+                  const centerY = h/2; 
+                  // We approximate hit point y as center for simplicity in 2.5D
+                  const distFromCenter = Math.sqrt(Math.pow(x - centerX, 2));
+                  
+                  // Light Circle
+                  if(distFromCenter < 250) {
+                      lightIntensity = Math.max(0, 255 - perpWallDist * 30);
+                      // Soft edge
+                      lightIntensity *= (1 - distFromCenter/250);
+                  } else {
+                      lightIntensity = Math.max(0, 20 - perpWallDist * 5);
+                  }
               } else {
-                  // Ambient dark
-                  lightIntensity = Math.max(0, 50 - perpWallDist * 10);
+                  lightIntensity = Math.max(0, 40 - perpWallDist * 10);
               }
               
               const r = Math.min(255, baseColor * (lightIntensity/255));
@@ -658,66 +647,104 @@
 
       drawUI(w, h) {
           const ctx = this.ctx;
-          
-          // Held Item (Right Hand)
           const item = this.inventory[this.activeSlot];
+          
+          // Hands (Dual - Cry of Fear style often shows two hands for items or interaction)
+          // Left Hand (Support)
+          ctx.fillStyle = "#111"; // Dark Sleeve
+          ctx.fillRect(20, h-150, 100, 150);
+          ctx.fillStyle = "#cbb"; // Skin
+          ctx.fillRect(40, h-180, 60, 40); 
+
+          // Right Hand (Active)
+          ctx.save();
+          ctx.translate(w - 200, h - 180);
+          
+          // Sleeve
+          ctx.fillStyle = "#111";
+          ctx.fillRect(50, 80, 100, 200);
+          
+          // Hand/Item Logic (Simulated Low Poly via Gradients)
           if(item) {
-              ctx.save();
-              ctx.translate(w - 250, h - 250);
               if(item.id === 'gun') {
-                  ctx.fillStyle = "#333";
-                  ctx.fillRect(50, 50, 40, 150); // Handle
-                  ctx.fillStyle = "#555";
-                  ctx.fillRect(40, 50, 100, 40); // Barrel
-                  ctx.fillStyle = "#000"; // Muzzle
-                  ctx.fillRect(140, 55, 10, 30);
+                  // Glock Slide
+                  const slide = ctx.createLinearGradient(0,0,100,0);
+                  slide.addColorStop(0, "#444"); slide.addColorStop(0.5, "#777"); slide.addColorStop(1, "#333");
+                  ctx.fillStyle = slide;
+                  ctx.fillRect(40, 40, 120, 40); // Slide
+                  ctx.fillStyle = "#111";
+                  ctx.fillRect(50, 80, 30, 60); // Grip
+                  // Sights
+                  ctx.fillStyle = "#0f0"; ctx.fillRect(155, 38, 3, 3);
               } else if (item.id === 'knife') {
-                  ctx.rotate(-0.2);
-                  ctx.fillStyle = "#654321";
-                  ctx.fillRect(80, 100, 30, 100); // Handle
-                  ctx.fillStyle = "#ccc";
+                  ctx.rotate(-0.3);
+                  // Handle
+                  ctx.fillStyle = "#3e2723";
+                  ctx.fillRect(60, 60, 30, 80);
+                  // Blade
+                  const blade = ctx.createLinearGradient(60,0,100,100);
+                  blade.addColorStop(0, "#fff"); blade.addColorStop(1, "#999");
+                  ctx.fillStyle = blade;
                   ctx.beginPath();
-                  ctx.moveTo(80, 100); ctx.lineTo(95, 0); ctx.lineTo(110, 100);
+                  ctx.moveTo(70, 60); ctx.lineTo(90, -60); ctx.lineTo(100, 60);
                   ctx.fill();
+                  // Blood stain
+                  ctx.fillStyle = "rgba(150,0,0,0.6)";
+                  ctx.beginPath(); ctx.arc(85, -20, 10, 0, Math.PI*2); ctx.fill();
               } else if (item.id === 'flashlight') {
+                  // Maglite Body
+                  const body = ctx.createLinearGradient(0,0,100,0);
+                  body.addColorStop(0, "#111"); body.addColorStop(0.5, "#333"); body.addColorStop(1, "#000");
+                  ctx.fillStyle = body;
+                  ctx.fillRect(50, 50, 120, 40);
+                  // Head
                   ctx.fillStyle = "#222";
-                  ctx.fillRect(60, 80, 40, 120);
-                  ctx.fillStyle = this.flashlightOn ? "#ffeb3b" : "#555";
-                  ctx.beginPath(); ctx.arc(80, 80, 30, 0, Math.PI*2); ctx.fill();
+                  ctx.fillRect(170, 40, 30, 60);
+                  // Beam source
+                  if(this.flashlightOn) {
+                      ctx.fillStyle = "#fff";
+                      ctx.fillRect(200, 45, 5, 50);
+                  }
               }
-              ctx.restore();
           }
+          
+          // Hand holding it
+          ctx.fillStyle = "#cbb"; // Skin
+          ctx.beginPath(); ctx.arc(80, 100, 40, 0, Math.PI*2); ctx.fill(); // Knuckles
+          
+          ctx.restore();
 
-          // Hand base
-          ctx.fillStyle = "#dcb"; // Skin tone
-          ctx.beginPath(); ctx.arc(w-150, h, 80, 0, Math.PI*2); ctx.fill();
-
-          // Hotbar
+          // Inventory Bar (Minecraft Style)
           const slotSize = 50;
           const startX = w/2 - (9 * slotSize)/2;
-          ctx.fillStyle = "rgba(0,0,0,0.5)";
-          ctx.fillRect(startX - 10, h - 70, (slotSize+5)*9 + 15, 65);
+          
+          // Background
+          ctx.fillStyle = "rgba(20,20,20,0.8)";
+          ctx.fillRect(startX - 5, h - 60, (slotSize+4)*9 + 6, 55);
           
           for(let i=0; i<9; i++) {
-              const x = startX + i*(slotSize+5);
-              ctx.lineWidth = 3;
-              ctx.strokeStyle = (i === this.activeSlot) ? "#fff" : "#555";
-              ctx.strokeRect(x, h - 65, slotSize, slotSize);
+              const x = startX + i*(slotSize+4);
+              const isSel = (i === this.activeSlot);
+              
+              ctx.fillStyle = isSel ? "rgba(200,200,200,0.3)" : "rgba(50,50,50,0.5)";
+              ctx.fillRect(x, h - 55, slotSize, slotSize);
+              ctx.strokeStyle = isSel ? "#fff" : "#444";
+              ctx.lineWidth = isSel ? 3 : 1;
+              ctx.strokeRect(x, h - 55, slotSize, slotSize);
               
               if(this.inventory[i]) {
-                  ctx.fillStyle = "#fff";
+                  ctx.fillStyle = "#ddd";
                   ctx.font = "10px monospace";
-                  ctx.fillText(this.inventory[i].name.substring(0,3), x+5, h-35);
+                  ctx.fillText(this.inventory[i].name.substring(0,6), x+2, h-40);
               }
           }
           
-          // Crosshair
-          ctx.strokeStyle = "rgba(255,255,255,0.5)";
-          ctx.lineWidth = 2;
-          ctx.beginPath(); 
-          ctx.moveTo(w/2 - 10, h/2); ctx.lineTo(w/2 + 10, h/2);
-          ctx.moveTo(w/2, h/2 - 10); ctx.lineTo(w/2, h/2 + 10);
-          ctx.stroke();
+          // Offhand Slot
+          ctx.fillStyle = "rgba(20,20,20,0.8)";
+          ctx.fillRect(startX - 70, h - 60, slotSize, slotSize);
+          ctx.strokeStyle = "#444"; ctx.lineWidth = 1;
+          ctx.strokeRect(startX - 70, h - 60, slotSize, slotSize);
+          ctx.fillStyle = "#aaa"; ctx.fillText("OFF", startX - 65, h-35);
       }
   }
 
@@ -811,6 +838,8 @@
       this.crackMode = false;
       this.crackDenials = 0;
       this.dialogOpen = false;
+      this.cutsceneTime = 0;
+      this.inCutscene = false;
 
       this.cycle = new DayNightCycle();
       this.data = StorageManager.load();
@@ -827,7 +856,7 @@
             return; 
         }
 
-        if(this.shopOpen || this.isPaused || this.dialogOpen) return;
+        if(this.shopOpen || this.isPaused || this.dialogOpen || this.inCutscene) return;
         if(e.type === 'keydown' && (e.code!=="Space" && e.code!=="KeyW")) return;
         if(e.preventDefault) e.preventDefault(); 
         this.handleInput();
@@ -902,7 +931,7 @@
     }
 
     togglePause() {
-        if (!this.player.alive || this.startDelay || this.shopOpen || this.dialogOpen) return;
+        if (!this.player.alive || this.startDelay || this.shopOpen || this.dialogOpen || this.inCutscene) return;
         this.isPaused = !this.isPaused;
         this.ui.pause.style.display = this.isPaused ? "flex" : "none";
     }
@@ -934,10 +963,9 @@
         this.isPaused = false;
         this.ui.pause.style.display = "none";
         
-        // Delay Shop Button Appearance
         setTimeout(() => {
             if(!this.player.alive) this.ui.shopBtn.style.display = "block";
-        }, 3000); // Wait for death anim
+        }, 3000); 
 
         this.ui.mult.className = "";
         this.ui.multTime.innerText = "";
@@ -1035,14 +1063,20 @@
             this.ui.loadFill.style.width = "100%";
             setTimeout(() => {
                 this.ui.crackLoad.style.display = "none";
-                this.activateFPSMode();
+                this.startCutscene();
             }, 500);
         }, 2000);
     }
 
-    activateFPSMode() {
-        this.crackMode = true;
+    startCutscene() {
+        this.inCutscene = true;
+        this.cutsceneTime = 0;
         this.dialogOpen = false;
+    }
+
+    activateFPSMode() {
+        this.inCutscene = false;
+        this.crackMode = true;
         // Hide 2D UI
         document.getElementById("hud-container").style.display = "none";
         document.getElementById("overlay-center").style.display = "none";
@@ -1387,7 +1421,7 @@
       const W = this.w;
       const H = this.h;
       
-      // Improved Celestial Path: Make arc higher
+      // Higher arc
       const cx = W / 2;
       const cy = H + 100; 
       const radius = W / 2 + 150;
@@ -1399,46 +1433,80 @@
       const mx = cx + Math.cos(angle + Math.PI) * radius;
       const my = cy + Math.sin(angle + Math.PI) * radius;
 
-      // Celestial Fade
-      let sunAlpha = 1;
-      if(p > 0.2 && p < 0.8) sunAlpha = Math.max(0, 1 - (p-0.2)*10); 
-      // Simplified visibility logic
-      
-      // Draw Sun
-      if (sy < H + 200) {
-        ctx.globalAlpha = 1;
-        ctx.fillStyle = "#FFD700";
-        ctx.shadowBlur = 40; ctx.shadowColor = "orange";
-        ctx.beginPath(); ctx.arc(sx, sy, 40, 0, Math.PI*2); ctx.fill();
-        ctx.fillStyle = "#FFFFE0";
-        ctx.beginPath(); ctx.arc(sx, sy, 30, 0, Math.PI*2); ctx.fill();
-        ctx.shadowBlur = 0;
-      }
+      // Fade logic
+      const drawBody = (x, y, color, glow, isSun) => {
+          if(y < H + 200) {
+              const horizonDist = (H + 200) - y;
+              const alpha = Math.min(1, horizonDist / 200); // Fade out near horizon
+              
+              ctx.globalAlpha = alpha;
+              ctx.fillStyle = color;
+              ctx.shadowBlur = isSun ? 40 : 20; ctx.shadowColor = glow;
+              ctx.beginPath(); ctx.arc(x, y, isSun?40:35, 0, Math.PI*2); ctx.fill();
+              
+              if(isSun) {
+                  ctx.fillStyle = "#FFFFE0";
+                  ctx.beginPath(); ctx.arc(x, y, 30, 0, Math.PI*2); ctx.fill();
+              } else {
+                  ctx.fillStyle = "rgba(0,0,0,0.1)"; 
+                  ctx.beginPath(); ctx.arc(x-10, y-5, 8, 0, Math.PI*2); ctx.fill();
+                  ctx.beginPath(); ctx.arc(x+12, y+10, 5, 0, Math.PI*2); ctx.fill();
+              }
+              ctx.shadowBlur = 0;
+              ctx.globalAlpha = 1;
+          }
+      };
 
-      // Draw Moon
-      if (my < H + 200) {
-        // Moon fade in/out
-        let mAlpha = 1;
-        // Moon at top around 0.5
-        if(p < 0.3 || p > 0.7) mAlpha = Math.max(0, (p > 0.7 ? (p-0.7)*5 : 0) + (p < 0.3 ? (0.3-p)*5 : 0));
-        // Wait, simplified: if it's on screen it's visible, just fade near horizon
-        const horizonDist = (H + 100) - my;
-        if(horizonDist < 100) mAlpha = horizonDist / 100;
-        
-        ctx.globalAlpha = mAlpha;
-        ctx.fillStyle = "#F5F3CE";
-        ctx.shadowBlur = 20; ctx.shadowColor = "white";
-        ctx.beginPath(); ctx.arc(mx, my, 35, 0, Math.PI*2); ctx.fill();
-        ctx.fillStyle = "rgba(0,0,0,0.1)"; // Craters
-        ctx.beginPath(); ctx.arc(mx-10, my-5, 8, 0, Math.PI*2); ctx.fill();
-        ctx.beginPath(); ctx.arc(mx+12, my+10, 5, 0, Math.PI*2); ctx.fill();
-        ctx.shadowBlur = 0;
-        ctx.globalAlpha = 1;
-      }
+      drawBody(sx, sy, "#FFD700", "orange", true);
+      drawBody(mx, my, "#F5F3CE", "white", false);
     }
 
     draw() {
       const ctx = this.ctx, W = this.w, H = this.h;
+      
+      // Cutscene Mode
+      if (this.inCutscene) {
+          ctx.fillStyle = "#000";
+          ctx.fillRect(0,0,W,H);
+          
+          ctx.save();
+          // Center on Player
+          const pl = this.player;
+          const cx = pl.x + pl.size/2;
+          const cy = pl.y + pl.size/2;
+          
+          ctx.translate(W/2, H/2);
+          
+          // Animation Progress
+          this.cutsceneTime += 0.03;
+          const progress = Math.min(1, this.cutsceneTime / 4); // 4 seconds duration
+          const scale = 1 + Math.pow(progress, 3) * 30; // Zoom heavily at end
+          const rot = progress * Math.PI * 4; // Spin 2 times
+          
+          ctx.scale(scale, scale);
+          ctx.rotate(rot);
+          ctx.translate(-cx, -cy); // Move world so player is at center
+          
+          // Draw just the player surroundings for effect
+          // Sky
+          ctx.fillStyle = "#4b8ce6";
+          ctx.fillRect(cx-W, cy-H, W*2, H*2);
+          
+          // Player
+          ctx.fillStyle = CONSTANTS.COLORS.PLAYER; 
+          ctx.fillRect(pl.x, pl.y, pl.size, pl.size);
+          ctx.shadowColor = "#e6ac00"; ctx.shadowBlur = 10; 
+          ctx.strokeRect(pl.x, pl.y, pl.size, pl.size); ctx.shadowBlur = 0;
+          
+          // Eye Entry
+          if (progress >= 1) {
+              this.activateFPSMode();
+          }
+          
+          ctx.restore();
+          return;
+      }
+
       const col = this.cycle.get(this.score);
       
       this.drawClock(col.p);
@@ -1499,10 +1567,8 @@
              ctx.clip(); 
              
              ctx.fillStyle = "#fff";
-             // "Increase threshold meant less snow"
-             // Snow is drawn from 0 (Top) down to threshold
-             // Less snow = smaller threshold value (higher y)
-             const snowThreshold = H * 0.35; // Strict tips only
+             // Threshold ~0.35 for high peaks
+             const snowThreshold = H * 0.35; 
              
              ctx.beginPath();
              ctx.moveTo(rx, 0); 
@@ -1589,11 +1655,11 @@
       const dt = Math.min(0.05, (now - this.lastT) / 1000);
       this.lastT = now;
 
-      if (this.crackMode && this.fpsEngine) {
+      if (this.crackMode && this.fpsEngine && !this.inCutscene) {
           this.fpsEngine.update(dt);
           this.fpsEngine.draw(this.w, this.h);
       } else {
-          if (this.isPaused || (this.dialogOpen && !this.crackMode)) {
+          if (this.isPaused || (this.dialogOpen && !this.crackMode && !this.inCutscene)) {
             if(this.isPaused) {
                this.pauseTime -= dt;
                this.ui.pauseTimer.innerText = this.pauseTime.toFixed(2);
@@ -1601,11 +1667,12 @@
                    this.die();
                }
             }
-          } else if (!this.shopOpen) { 
+          } else if (!this.shopOpen && !this.inCutscene) { 
               this.time += dt; 
               this.update(dt); 
           }
-          if(!this.crackMode) this.draw();
+          // If we are in cutscene or regular mode, draw 2D
+          if(!this.crackMode || this.inCutscene) this.draw();
       }
       
       requestAnimationFrame(this.loop);
