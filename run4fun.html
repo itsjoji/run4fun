@@ -286,12 +286,21 @@
   /* --- CRACK MODE (FPS) HUD --- */
   #fps-overlay {
     display: none; position: absolute; inset: 0; pointer-events: none; z-index: 50;
-    box-shadow: inset 0 0 100px rgba(0,0,0,0.9);
+    mix-blend-mode: overlay; pointer-events: none;
+  }
+  
+  /* CRY OF FEAR STYLE NOISE & VIGNETTE */
+  .grain-overlay {
+    position: absolute; inset: 0;
+    background-image: url('data:image/svg+xml,%3Csvg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"%3E%3Cfilter id="noiseFilter"%3E%3CfeTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="3" stitchTiles="stitch"/%3E%3C/filter%3E%3Crect width="100%25" height="100%25" filter="url(%23noiseFilter)" opacity="0.15"/%3E%3C/svg%3E');
+    opacity: 0.4; pointer-events: none;
+    animation: grainShift 0.2s steps(4) infinite;
   }
   .vignette {
     position: absolute; inset: 0;
-    background: radial-gradient(circle, transparent 50%, black 100%);
+    background: radial-gradient(circle, rgba(0,0,0,0) 30%, rgba(0,0,0,0.8) 90%, rgba(0,0,0,1) 100%);
   }
+  @keyframes grainShift { 0% { transform: translate(0,0) } 25% { transform: translate(-5px,5px) } 50% { transform: translate(5px,-5px) } 75% { transform: translate(-5px,-5px) } }
 
   #touch-btn {
     position: absolute; right: 20px; bottom: 20px; width: 75px; height: 75px;
@@ -308,6 +317,7 @@
 <canvas id="game"></canvas>
 
 <div id="fps-overlay">
+  <div class="grain-overlay"></div>
   <div class="vignette"></div>
 </div>
 
@@ -487,6 +497,33 @@
     get(id) { return this.cache[id]; }
   };
 
+  /** TEXTURE GENERATOR */
+  const TextureGen = {
+      createConcrete(w, h) {
+          const c = document.createElement('canvas'); c.width=w; c.height=h;
+          const ctx = c.getContext('2d');
+          ctx.fillStyle = '#333'; ctx.fillRect(0,0,w,h);
+          for(let i=0; i<w*h*0.8; i++) {
+              ctx.fillStyle = Math.random()>0.5 ? 'rgba(0,0,0,0.3)' : 'rgba(100,100,100,0.1)';
+              ctx.fillRect(Math.random()*w, Math.random()*h, 2, 2);
+          }
+          return c;
+      },
+      createBrick(w, h) {
+          const c = document.createElement('canvas'); c.width=w; c.height=h;
+          const ctx = c.getContext('2d');
+          ctx.fillStyle = '#2a2a2a'; ctx.fillRect(0,0,w,h);
+          ctx.fillStyle = '#3a2a2a'; 
+          for(let y=0; y<h; y+=16) {
+              for(let x=0; x<w; x+=32) {
+                  let off = (y/16)%2 === 0 ? 0 : 16;
+                  ctx.fillRect(x+off+1, y+1, 30, 14);
+              }
+          }
+          return c;
+      }
+  };
+
   /** FPS MODE ENGINE (RAYCASTER) */
   class RaycasterEngine {
       constructor(cvs) {
@@ -496,8 +533,9 @@
           this.mapH = 24;
           this.map = [];
           this.texSize = 64;
-          this.player = { x: 12, y: 12, dir: 0, pitch: 0, plane: {x:0, y:0.84} }; // FOV ~80deg
+          this.player = { x: 12, y: 12, dir: 0, pitch: 0, plane: {x:0, y:0.95} }; // FOV ~80deg
           this.flashlightOn = true;
+          this.bobPhase = 0;
           
           this.inventory = [
               {id: 'gun', name: 'Glock-19'}, 
@@ -506,15 +544,27 @@
           ];
           this.activeSlot = 0;
 
-          // Maze
+          // Generate Textures
+          this.textures = [
+              TextureGen.createConcrete(64,64),
+              TextureGen.createBrick(64,64)
+          ];
+
+          // Tighter Map Generation (Corridors)
           for(let y=0; y<this.mapH; y++) {
               let row = [];
               for(let x=0; x<this.mapW; x++) {
-                  row.push((x===0||x===this.mapW-1||y===0||y===this.mapH-1||Math.random()<0.15) ? 1 : 0);
+                  if(x===0||x===this.mapW-1||y===0||y===this.mapH-1) {
+                      row.push(1);
+                  } else if (x%2===0 && Math.random()>0.3) {
+                      row.push(2);
+                  } else {
+                      row.push(0);
+                  }
               }
               this.map.push(row);
           }
-          this.map[12][12] = 0; 
+          this.map[12][12] = 0; this.map[12][13]=0; this.map[13][12]=0;
           
           this.keys = {w:false, a:false, s:false, d:false};
           window.addEventListener('keydown', e => this.key(e, true));
@@ -522,9 +572,9 @@
           
           document.addEventListener("mousemove", (e) => {
               if(document.pointerLockElement === this.cvs) {
-                  this.player.dir -= e.movementX * 0.002; // Reversed X
-                  this.player.pitch -= e.movementY * 2;
-                  this.player.pitch = Math.max(-300, Math.min(300, this.player.pitch)); // Clamp Look
+                  this.player.dir += e.movementX * 0.002; // X Reversed
+                  this.player.pitch -= e.movementY * 1.5;
+                  this.player.pitch = Math.max(-200, Math.min(200, this.player.pitch)); 
               }
           });
       }
@@ -544,43 +594,50 @@
       }
 
       update(dt) {
-          const moveSpeed = 5.0 * dt;
+          const moveSpeed = 4.0 * dt; // Slower, heavier
           
+          // Rotation Vectors
           const dx = Math.cos(this.player.dir) * moveSpeed;
           const dy = Math.sin(this.player.dir) * moveSpeed;
           const sx = Math.cos(this.player.dir + Math.PI/2) * moveSpeed;
           const sy = Math.sin(this.player.dir + Math.PI/2) * moveSpeed;
           
           let nx = this.player.x, ny = this.player.y;
+          let moving = false;
+
+          if(this.keys.w) { nx += dx; ny += dy; moving=true; }
+          if(this.keys.s) { nx -= dx; ny -= dy; moving=true; }
+          if(this.keys.a) { nx -= sx; ny -= sy; moving=true; } // Swapped A/D
+          if(this.keys.d) { nx += sx; ny += sy; moving=true; } 
           
-          if(this.keys.w) { nx += dx; ny += dy; }
-          if(this.keys.s) { nx -= dx; ny -= dy; }
-          if(this.keys.a) { nx -= sx; ny -= sy; } // Swap A/D
-          if(this.keys.d) { nx += sx; ny += sy; } 
-          
+          // Simple Collision
           if(this.map[Math.floor(ny)][Math.floor(this.player.x)] === 0) this.player.y = ny;
           if(this.map[Math.floor(this.player.y)][Math.floor(nx)] === 0) this.player.x = nx;
+
+          // Head Bob
+          if(moving) {
+              this.bobPhase += dt * 10;
+          } else {
+              this.bobPhase = 0; // Reset to center? Or smoothly dampen. Just reset for now.
+          }
       }
 
       draw(w, h) {
-          this.ctx.fillStyle = '#050505';
+          // Head Bob Offset
+          const bobY = Math.sin(this.bobPhase) * 10;
+          const bobX = Math.cos(this.bobPhase/2) * 5;
+
+          // Sky/Floor Clearing
+          this.ctx.fillStyle = '#000';
           this.ctx.fillRect(0, 0, w, h);
           
-          const horizon = h/2 + this.player.pitch;
+          const horizon = h/2 + this.player.pitch + bobY;
 
-          // Ceiling/Floor
-          const grad = this.ctx.createLinearGradient(0,0,0,h);
-          grad.addColorStop(0, '#000'); 
-          grad.addColorStop(0.5, '#1a1a1a'); 
-          grad.addColorStop(1, '#000');
-          this.ctx.fillStyle = grad;
-          this.ctx.fillRect(0, horizon, w, h - horizon);
-
-          // Raycast
-          for(let x = 0; x < w; x += 4) { 
+          // Textured Raycasting Loop
+          for(let x = 0; x < w; x += 2) { // Resolution 2px for performance/style
               const cameraX = 2 * x / w - 1;
-              const rayDirX = Math.cos(this.player.dir) + this.player.plane.x * Math.cos(this.player.dir - Math.PI/2) * cameraX;
-              const rayDirY = Math.sin(this.player.dir) + this.player.plane.y * Math.sin(this.player.dir - Math.PI/2) * cameraX;
+              const rayDirX = Math.cos(this.player.dir) + this.player.plane.x * cameraX;
+              const rayDirY = Math.sin(this.player.dir) + this.player.plane.y * cameraX;
               
               let mapX = Math.floor(this.player.x);
               let mapY = Math.floor(this.player.y);
@@ -588,10 +645,12 @@
               
               const deltaDistX = Math.abs(1/rayDirX);
               const deltaDistY = Math.abs(1/rayDirY);
+              let perpWallDist;
               
               let stepX, stepY;
               let hit = 0;
-              let side;
+              let side; // 0 for NS, 1 for EW
+              let texNum = 0;
               
               if(rayDirX < 0) { stepX = -1; sideDistX = (this.player.x - mapX) * deltaDistX; }
               else { stepX = 1; sideDistX = (mapX + 1.0 - this.player.x) * deltaDistX; }
@@ -601,150 +660,179 @@
               while(hit === 0) {
                   if(sideDistX < sideDistY) { sideDistX += deltaDistX; mapX += stepX; side = 0; }
                   else { sideDistY += deltaDistY; mapY += stepY; side = 1; }
-                  if(this.map[mapY][mapX] > 0) hit = 1;
+                  if(this.map[mapY][mapX] > 0) {
+                      hit = 1;
+                      texNum = this.map[mapY][mapX] - 1;
+                  }
               }
               
-              let perpWallDist;
               if(side === 0) perpWallDist = (mapX - this.player.x + (1 - stepX) / 2) / rayDirX;
               else perpWallDist = (mapY - this.player.y + (1 - stepY) / 2) / rayDirY;
               
               const lineHeight = Math.floor(h / perpWallDist);
-              const drawStart = -lineHeight / 2 + h / 2 + this.player.pitch;
+              const drawStart = -lineHeight / 2 + h / 2 + this.player.pitch + bobY;
               
-              // Lighting
-              let baseColor = side === 1 ? 100 : 140;
+              // Texture X calc
+              let wallX;
+              if (side == 0) wallX = this.player.y + perpWallDist * rayDirY;
+              else           wallX = this.player.x + perpWallDist * rayDirX;
+              wallX -= Math.floor(wallX);
+              
+              let texX = Math.floor(wallX * 64);
+              if(side == 0 && rayDirX > 0) texX = 64 - texX - 1;
+              if(side == 1 && rayDirY < 0) texX = 64 - texX - 1;
+
+              // Lighting Calculation
               let lightIntensity = 0;
-              
               if(this.flashlightOn) {
-                  // Calculate radial distance from center screen
-                  const centerX = w/2;
-                  const centerY = h/2; 
-                  // We approximate hit point y as center for simplicity in 2.5D
-                  const distFromCenter = Math.sqrt(Math.pow(x - centerX, 2));
+                  // Circle Logic: Screen Space
+                  const cx = w/2;
+                  const cy = h/2;
+                  // Approximating hit point on screen
+                  const distToCenter = Math.sqrt(Math.pow(x-cx, 2));
                   
-                  // Light Circle
-                  if(distFromCenter < 250) {
-                      lightIntensity = Math.max(0, 255 - perpWallDist * 30);
-                      // Soft edge
-                      lightIntensity *= (1 - distFromCenter/250);
+                  if(distToCenter < 300) { // Large Circle
+                      const falloff = 1 - (distToCenter/300);
+                      // Inverse Square Law proxy for distance
+                      const distAtten = 1.0 / (perpWallDist * 0.5 + 0.1);
+                      lightIntensity = Math.min(1.2, distAtten * falloff * 3.0); 
                   } else {
-                      lightIntensity = Math.max(0, 20 - perpWallDist * 5);
+                      lightIntensity = 0; // Pitch black outside cone
                   }
               } else {
-                  lightIntensity = Math.max(0, 40 - perpWallDist * 10);
+                  // Ambient
+                  lightIntensity = Math.max(0, 0.1 - perpWallDist*0.05);
               }
               
-              const r = Math.min(255, baseColor * (lightIntensity/255));
-              const g = Math.min(255, baseColor * (lightIntensity/255));
-              const b = Math.min(255, baseColor * (lightIntensity/255));
-
-              this.ctx.fillStyle = `rgb(${r},${g},${b})`;
-              this.ctx.fillRect(x, drawStart, 4, lineHeight);
+              // Draw Vertical Strip
+              // We draw a slice of the texture. 
+              // Performance Hack: Draw full strip from a pattern/image? 
+              // Native canvas doesn't support 'draw texture column' easily without drawImage loop.
+              // Using drawImage for every 2px slice is heavy but manageable for low res.
+              
+              const tex = this.textures[texNum % this.textures.length];
+              
+              // Darken by side
+              this.ctx.globalAlpha = 1.0;
+              // Draw Texture Slice
+              this.ctx.drawImage(tex, texX, 0, 1, 64, x, drawStart, 2, lineHeight);
+              
+              // Apply Lighting (Black overlay with alpha)
+              const darkness = 1.0 - lightIntensity;
+              if(darkness > 0) {
+                  this.ctx.fillStyle = `rgba(0,0,0,${Math.min(1, darkness)})`;
+                  this.ctx.fillRect(x, drawStart, 2, lineHeight);
+              }
           }
           
-          this.drawUI(w, h);
+          this.drawUI(w, h, bobX, bobY);
       }
 
-      drawUI(w, h) {
+      drawUI(w, h, bx, by) {
           const ctx = this.ctx;
           const item = this.inventory[this.activeSlot];
           
-          // Hands (Dual - Cry of Fear style often shows two hands for items or interaction)
-          // Left Hand (Support)
-          ctx.fillStyle = "#111"; // Dark Sleeve
-          ctx.fillRect(20, h-150, 100, 150);
-          ctx.fillStyle = "#cbb"; // Skin
-          ctx.fillRect(40, h-180, 60, 40); 
+          // 3D sway effect on UI
+          const swayX = -bx * 2; 
+          const swayY = -by * 2;
 
-          // Right Hand (Active)
           ctx.save();
-          ctx.translate(w - 200, h - 180);
+          ctx.translate(swayX, swayY);
+
+          // HANDS: Left Hand (Phone/Light/Support)
+          ctx.fillStyle = "#080808"; // Hoodie sleeve
+          ctx.fillRect(40, h-180, 80, 200);
+          ctx.fillStyle = "#dcb"; // Skin
+          ctx.fillRect(50, h-210, 50, 40); 
+          // Phone/Device glow?
+          ctx.fillStyle = "#acf"; 
+          ctx.fillRect(60, h-200, 10, 20);
+
+          // RIGHT HAND (Weapon)
+          ctx.translate(w - 220, h - 250);
           
           // Sleeve
-          ctx.fillStyle = "#111";
-          ctx.fillRect(50, 80, 100, 200);
+          ctx.fillStyle = "#0a0a0a";
+          ctx.beginPath();
+          ctx.moveTo(50, 250); ctx.lineTo(150, 250); ctx.lineTo(130, 100); ctx.lineTo(70, 100);
+          ctx.fill();
           
-          // Hand/Item Logic (Simulated Low Poly via Gradients)
+          // Hand
+          ctx.fillStyle = "#dcb";
+          ctx.fillRect(70, 80, 60, 50);
+
           if(item) {
               if(item.id === 'gun') {
-                  // Glock Slide
-                  const slide = ctx.createLinearGradient(0,0,100,0);
-                  slide.addColorStop(0, "#444"); slide.addColorStop(0.5, "#777"); slide.addColorStop(1, "#333");
-                  ctx.fillStyle = slide;
-                  ctx.fillRect(40, 40, 120, 40); // Slide
-                  ctx.fillStyle = "#111";
-                  ctx.fillRect(50, 80, 30, 60); // Grip
-                  // Sights
-                  ctx.fillStyle = "#0f0"; ctx.fillRect(155, 38, 3, 3);
-              } else if (item.id === 'knife') {
-                  ctx.rotate(-0.3);
-                  // Handle
-                  ctx.fillStyle = "#3e2723";
-                  ctx.fillRect(60, 60, 30, 80);
-                  // Blade
-                  const blade = ctx.createLinearGradient(60,0,100,100);
-                  blade.addColorStop(0, "#fff"); blade.addColorStop(1, "#999");
-                  ctx.fillStyle = blade;
-                  ctx.beginPath();
-                  ctx.moveTo(70, 60); ctx.lineTo(90, -60); ctx.lineTo(100, 60);
-                  ctx.fill();
-                  // Blood stain
-                  ctx.fillStyle = "rgba(150,0,0,0.6)";
-                  ctx.beginPath(); ctx.arc(85, -20, 10, 0, Math.PI*2); ctx.fill();
-              } else if (item.id === 'flashlight') {
-                  // Maglite Body
-                  const body = ctx.createLinearGradient(0,0,100,0);
-                  body.addColorStop(0, "#111"); body.addColorStop(0.5, "#333"); body.addColorStop(1, "#000");
-                  ctx.fillStyle = body;
-                  ctx.fillRect(50, 50, 120, 40);
-                  // Head
+                  // Low Poly Glock - Dark Grey/Black
                   ctx.fillStyle = "#222";
-                  ctx.fillRect(170, 40, 30, 60);
-                  // Beam source
+                  ctx.fillRect(60, 40, 20, 60); // Grip
+                  ctx.fillStyle = "#111";
+                  ctx.fillRect(40, 40, 100, 25); // Barrel
+                  ctx.fillStyle = "#444"; // Highlight
+                  ctx.fillRect(40, 40, 100, 5);
+              } else if (item.id === 'knife') {
+                  // Kitchen Knife
+                  ctx.translate(80, 80);
+                  ctx.rotate(-0.5);
+                  ctx.fillStyle = "#3e2723";
+                  ctx.fillRect(0, 0, 20, 60); // Handle
+                  ctx.fillStyle = "#ccc"; // Blade
+                  ctx.beginPath();
+                  ctx.moveTo(0,0); ctx.lineTo(20,0); ctx.lineTo(10, -80); 
+                  ctx.fill();
+                  ctx.fillStyle = "rgba(100,0,0,0.5)"; // Rust/Blood
+                  ctx.beginPath(); ctx.arc(10, -40, 5, 0, Math.PI*2); ctx.fill();
+              } else if (item.id === 'flashlight') {
+                  // Heavy Metal Flashlight
+                  ctx.translate(60, 60);
+                  ctx.rotate(-0.2);
+                  ctx.fillStyle = "#222";
+                  ctx.fillRect(0, 0, 30, 100);
+                  ctx.fillStyle = "#111";
+                  ctx.fillRect(-10, -20, 50, 30); // Head
                   if(this.flashlightOn) {
-                      ctx.fillStyle = "#fff";
-                      ctx.fillRect(200, 45, 5, 50);
+                      ctx.fillStyle = "rgba(255,255,200,0.8)";
+                      ctx.fillRect(-5, -25, 40, 5);
                   }
               }
           }
-          
-          // Hand holding it
-          ctx.fillStyle = "#cbb"; // Skin
-          ctx.beginPath(); ctx.arc(80, 100, 40, 0, Math.PI*2); ctx.fill(); // Knuckles
-          
           ctx.restore();
 
-          // Inventory Bar (Minecraft Style)
-          const slotSize = 50;
-          const startX = w/2 - (9 * slotSize)/2;
+          // INVENTORY (Minimalist/Gritty)
+          const slotSize = 40;
+          const startX = 20;
+          const startY = h - 100;
           
-          // Background
-          ctx.fillStyle = "rgba(20,20,20,0.8)";
-          ctx.fillRect(startX - 5, h - 60, (slotSize+4)*9 + 6, 55);
+          // Vertical List for "Survival" feel
+          ctx.font = "12px Courier New";
+          ctx.textAlign = "left";
           
-          for(let i=0; i<9; i++) {
-              const x = startX + i*(slotSize+4);
+          for(let i=0; i<this.inventory.length; i++) {
               const isSel = (i === this.activeSlot);
+              const y = startY + i*25;
               
-              ctx.fillStyle = isSel ? "rgba(200,200,200,0.3)" : "rgba(50,50,50,0.5)";
-              ctx.fillRect(x, h - 55, slotSize, slotSize);
-              ctx.strokeStyle = isSel ? "#fff" : "#444";
-              ctx.lineWidth = isSel ? 3 : 1;
-              ctx.strokeRect(x, h - 55, slotSize, slotSize);
-              
-              if(this.inventory[i]) {
-                  ctx.fillStyle = "#ddd";
-                  ctx.font = "10px monospace";
-                  ctx.fillText(this.inventory[i].name.substring(0,6), x+2, h-40);
+              if(isSel) {
+                  ctx.fillStyle = "rgba(200, 0, 0, 0.6)";
+                  ctx.fillRect(startX, y, 150, 20);
+                  ctx.fillStyle = "#fff";
+                  ctx.fillText("> " + this.inventory[i].name, startX + 5, y+14);
+              } else {
+                  ctx.fillStyle = "rgba(0,0,0,0.5)";
+                  ctx.fillRect(startX, y, 150, 20);
+                  ctx.fillStyle = "#888";
+                  ctx.fillText("  " + this.inventory[i].name, startX + 5, y+14);
               }
           }
           
-          // Offhand Slot
-          ctx.fillStyle = "rgba(20,20,20,0.8)";
-          ctx.fillRect(startX - 70, h - 60, slotSize, slotSize);
-          ctx.strokeStyle = "#444"; ctx.lineWidth = 1;
-          ctx.strokeRect(startX - 70, h - 60, slotSize, slotSize);
-          ctx.fillStyle = "#aaa"; ctx.fillText("OFF", startX - 65, h-35);
+          // Offhand Text
+          ctx.fillStyle = "#888";
+          ctx.fillText("[OFFHAND: EMPTY]", w - 120, h - 30);
+          
+          // Flashlight Battery UI hint
+          if(this.flashlightOn) {
+              ctx.fillStyle = "#ffeb3b";
+              ctx.fillText("LIGHT: ON", w - 120, h - 50);
+          }
       }
   }
 
