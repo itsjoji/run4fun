@@ -38,31 +38,55 @@
 
   /* HUD CONTAINER */
   #hud-container {
-    position: absolute; top: 20px; left: 20px;
-    display: flex; align-items: center; gap: 20px;
-    z-index: 10; pointer-events: none;
+    position: absolute; top: 22px; left: 50%;
+    transform: translateX(-50%);
+    display: flex; gap: 16px;
+    z-index: 12; pointer-events: none;
   }
 
   #hud-stats {
-    display: flex; flex-direction: column; gap: 8px;
-    font-family: var(--font-impact); letter-spacing: 1px;
+    display: flex; gap: 16px;
+    font-family: var(--font-impact);
+    letter-spacing: 1px;
   }
 
   .hud-box {
-    background: linear-gradient(90deg, rgba(0,0,0,0.8), rgba(0,0,0,0.4));
-    border-left: 4px solid #fff;
-    padding: 8px 15px;
-    border-radius: 0 4px 4px 0;
-    font-size: 20px;
-    color: white;
-    display: flex; align-items: center; gap: 10px;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-    text-shadow: 1px 1px 0 #000;
     min-width: 140px;
+    padding: 12px 18px;
+    border-radius: 14px;
+    background: rgba(6, 16, 40, 0.65);
+    border: 1px solid rgba(255,255,255,0.15);
+    box-shadow: 0 8px 18px rgba(0,0,0,0.35);
+    backdrop-filter: blur(8px);
+    display: flex; align-items: center;
+    gap: 12px;
+    position: relative;
+    overflow: hidden;
   }
   
-  #hud-stars { border-left-color: #ffd700; color: #ffd700; }
-  .hud-icon { width: 20px; text-align: center; }
+  .hud-box::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 14px;
+    border: 1px solid rgba(255,255,255,0.06);
+    pointer-events: none;
+  }
+
+  .hud-box .hud-icon {
+    width: 34px; height: 34px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    background: rgba(255,255,255,0.08);
+    box-shadow: inset 0 0 12px rgba(0,0,0,0.4);
+  }
+
+  .hud-body { display: flex; flex-direction: column; }
+  .hud-label { font-size: 10px; color: rgba(255,255,255,0.6); text-transform: uppercase; }
+  .hud-value { font-size: 24px; color: white; text-shadow: 0 0 8px rgba(0,0,0,0.6); }
+  #hud-stars .hud-icon { background: rgba(255, 215, 0, 0.15); color: #ffd700; }
+  #hud-highscore .hud-icon { background: rgba(102, 217, 255, 0.2); color: #66d9ff; }
 
   #clock-canvas {
     width: 80px; height: 80px;
@@ -180,6 +204,15 @@
   .item-name { color: white; font-weight: 800; font-size: 16px; margin-bottom: 5px; text-align: center; text-transform: uppercase; transform: skewX(5deg); }
   .shop-item[data-r="mythic"] .item-name { color: var(--r-mythic); }
   .item-price { color: #ffd700; font-size: 14px; font-family: var(--font-mono); font-weight: bold; transform: skewX(5deg); }
+  .item-desc {
+    margin-top: 6px;
+    font-size: 12px;
+    color: rgba(255,255,255,0.8);
+    text-align: center;
+    font-family: var(--font-main);
+    transform: skewX(5deg);
+    min-height: 32px;
+  }
 
   #shop-close {
     margin-top: 40px; background: #b00; color: white; border: none;
@@ -238,7 +271,7 @@
   .cheat-row { display: flex; justify-content: space-between; align-items: center; }
   .cheat-input { background: #222; color: #0f0; border: 1px solid #555; padding: 5px; width: 100px; font-family: monospace; }
   .cheat-input::-webkit-outer-spin-button, .cheat-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-  .cheat-input { -moz-appearance: textfield; }
+  .cheat-input { -moz-appearance: textfield; appearance: textfield; }
   .cheat-check { width: 20px; height: 20px; }
   #cheat-close { margin-top: 10px; background: #ffd700; color: black; border: none; padding: 10px; font-weight: bold; cursor: pointer; text-transform: uppercase; }
   #cheat-close:hover { background: #fff; }
@@ -296,10 +329,6 @@
     opacity: 0.4; pointer-events: none;
     animation: grainShift 0.2s steps(4) infinite;
   }
-  .vignette {
-    position: absolute; inset: 0;
-    background: radial-gradient(circle, rgba(0,0,0,0) 30%, rgba(0,0,0,0.8) 90%, rgba(0,0,0,1) 100%);
-  }
   @keyframes grainShift { 0% { transform: translate(0,0) } 25% { transform: translate(-5px,5px) } 50% { transform: translate(5px,-5px) } 75% { transform: translate(-5px,-5px) } }
 
   #touch-btn {
@@ -317,17 +346,31 @@
 <canvas id="game"></canvas>
 
 <div id="fps-overlay">
-  <div class="grain-overlay"></div>
-  <div class="vignette"></div>
+<div class="grain-overlay"></div>
 </div>
 
 <div id="hud-container">
   <div id="hud-stats">
     <div class="hud-box" id="hud-score">
-      <span class="hud-icon">🏆</span> <span id="score-val">0</span>
+      <div class="hud-icon">🏆</div>
+      <div class="hud-body">
+        <span class="hud-label">Score</span>
+        <span class="hud-value" id="score-val">0</span>
+      </div>
     </div>
     <div class="hud-box" id="hud-stars">
-      <span class="hud-icon">★</span> <span id="stars-val">0</span>
+      <div class="hud-icon">★</div>
+      <div class="hud-body">
+        <span class="hud-label">Stars</span>
+        <span class="hud-value" id="stars-val">0</span>
+      </div>
+    </div>
+    <div class="hud-box" id="hud-highscore">
+      <div class="hud-icon">⬆</div>
+      <div class="hud-body">
+        <span class="hud-label">Highscore</span>
+        <span class="hud-value" id="highscore-val">0</span>
+      </div>
     </div>
   </div>
   <canvas id="clock-canvas" width="64" height="64"></canvas>
@@ -402,6 +445,10 @@
     // ITEMS
     cone: { colors: { 1:"#ff6600", 2:"#ffffff" }, map: ["000010000","000010000","000111000","000111000","001111100","001111100","022222220","111111111"] },
     bandana: { colors: { 1:"#3366cc", 2:"#224488" }, map: ["000000000","111111111","121212121","111111111","100000001","100000001","200000002"] },
+    beanie: { colors: { 1:"#9b59b6", 2:"#6c3483", 3:"#f8e9ff" }, map: ["000111100","001333110","013333311","111222111","111222111","111111111"] },
+    sprout: { colors: { 1:"#81c784", 2:"#558b2f" }, map: ["000010000","000121000","001121100","001111100","011111110","111111111"] },
+    visor: { colors: { 1:"#1abc9c", 2:"#117a65", 3:"#ecf0f1" }, map: ["000000000","001111100","011222110","011222110","001333100","000111000"] },
+    goggles: { colors: { 1:"#263238", 2:"#90caf9", 3:"#e3f2fd" }, map: ["000000000","111000011","122000021","122000021","133000031","011111110"] },
     fedora: { colors: { 1:"#5d4037", 2:"#3e2723", 3:"#111" }, map: ["000111100","001111110","001121110","011111111","133333333","111111111"] },
     safety: { colors: { 1:"#ffeb3b", 2:"#fbc02d" }, map: ["000111100","001111110","011111111","111222111","111111111","111111111"] },
     afro: { colors: { 1:"#212121", 2:"#424242" }, map: ["001111100","011211110","111112111","112111111","111111211","111111111","011111110"] },
@@ -418,16 +465,18 @@
   };
 
   const SHOP_ITEMS = [
-    { id: 'cone', name: 'Traffic Cone', price: 0, rarity: 'common' },
-    { id: 'bandana', name: 'Blue Bandana', price: 25, rarity: 'common' },
-    { id: 'fedora', name: 'Detective', price: 50, rarity: 'uncommon' },
-    { id: 'safety', name: 'Safety First', price: 100, rarity: 'uncommon' },
-    { id: 'afro', name: 'Disco King', price: 150, rarity: 'rare' },
-    { id: 'astro', name: 'Space Walker', price: 250, rarity: 'rare' },
-    { id: 'spartan', name: 'Spartan Helm', price: 500, rarity: 'epic' },
-    { id: 'devil', name: 'Lil\' Horns', price: 666, rarity: 'epic' },
-    { id: 'king', name: 'Royal Crown', price: 1000, rarity: 'legendary' },
-    { id: 'wizardMega', name: 'Grand Magus', price: 2500, rarity: 'mythic' }
+    { id: 'cone', name: 'Traffic Cone', price: 0, rarity: 'common', desc: 'Found on the side of the road. Smells like victory.' },
+    { id: 'bandana', name: 'Blue Bandana', price: 25, rarity: 'common', desc: 'Keeps sweat, style, and secrets in place.' },
+    { id: 'safety', name: 'Safety First', price: 100, rarity: 'uncommon', desc: 'Industrial strength confidence booster.' },
+    { id: 'visor', name: 'Neon Visor', price: 140, rarity: 'uncommon', desc: 'For players who see the sun maybe once a week.' },
+    { id: 'fedora', name: 'Detective Hat', price: 320, rarity: 'rare', desc: 'Rainy alley vibes included. Case files sold separately.' },
+    { id: 'afro', name: 'Disco King', price: 420, rarity: 'rare', desc: 'All-night groove aura. Batteries not required.' },
+    { id: 'spartan', name: 'Spartan Helm', price: 650, rarity: 'epic', desc: 'There is only one rule: no one kicks the player.' },
+    { id: 'goggles', name: 'Trail Goggles', price: 900, rarity: 'epic', desc: 'Keeps wind, bugs, and responsibility away.' },
+    { id: 'king', name: 'Royal Crown', price: 2200, rarity: 'legendary', desc: 'Turns touch into treasure. Handle with silk gloves.' },
+    { id: 'wizardMega', name: 'Grand Magus', price: 2500, rarity: 'legendary', desc: 'Reality bends, particles swirl, mistakes get rewound.' },
+    { id: 'astro', name: 'Space Walker', price: 1500, rarity: 'mythic', desc: 'Moon boots, cow sightings, and zero-g swagger.' },
+    { id: 'devil', name: 'Lil\' Horns', price: 1600, rarity: 'mythic', desc: 'A souvenir from the subterranean commute.' }
   ];
 
   const CONSTANTS = {
@@ -445,6 +494,71 @@
     COLORS: { PLAT: "#5d4037", PLAT_TOP: "#4caf50", PLAYER: "#ffd42a", STAR: "#ffd700", BIRDS_C: ["#f0f8ff","#808080","#333333"], BIRDS_R: ["#aeea00","#ff0055","#00ccff"] }
   };
 
+  const WORLD_THEMES = {
+    normal: {
+      platform: { body: CONSTANTS.COLORS.PLAT, top: CONSTANTS.COLORS.PLAT_TOP },
+      star: CONSTANTS.COLORS.STAR,
+      player: CONSTANTS.COLORS.PLAYER
+    },
+    hell: {
+      skyTop: "#2d0202",
+      skyBot: "#0c0000",
+      far: "#4a0505",
+      near: "#7a1111",
+      hills: "#a41c1c",
+      platform: { body: "#3b0707", top: "#ff5f1f" },
+      star: "#ffdd66",
+      player: "#ffb347"
+    },
+    moon: {
+      skyTop: "#050d24",
+      skyBot: "#102041",
+      far: "#0b2447",
+      near: "#1f4690",
+      hills: "#3a6ea5",
+      platform: { body: "#9aa4c7", top: "#e6efff" },
+      star: "#c2f6ff",
+      player: "#fff6c2"
+    },
+    noir: {
+      skyTop: "#0f141b",
+      skyBot: "#1b1f2c",
+      far: "#0b0d15",
+      near: "#161821",
+      hills: "#1e2029",
+      platform: { body: "#22232c", top: "#2f313c" },
+      star: "#f1f1f1",
+      player: "#f7f7f0"
+    },
+    disco: {
+      skyTop: "#480ca8",
+      skyBot: "#03045e",
+      far: "#240046",
+      near: "#560bad",
+      hills: "#7209b7",
+      platform: { body: "#1f1a3d", top: "#8ac4ff" },
+      star: "#ffd166",
+      player: "#fefefe"
+    },
+    spartan: {
+      skyTop: "#5b0f0f",
+      skyBot: "#b62319",
+      far: "#330909",
+      near: "#761212",
+      hills: "#8c2a16",
+      platform: { body: "#4a1f0f", top: "#c87f28" },
+      star: "#ffdf8c",
+      player: "#ffe2a8"
+    }
+  };
+
+  const HAT_OVERLAYS = new Set(['astro', 'spartan']);
+  const HAT_OVERLAY_CONFIG = {
+    astro: { offsetY: 6 },
+    spartan: { offsetY: 4 }
+  };
+  const MIDAS_CONFIG = { passiveRate: 2.5, passiveAmount: 2, starBonus: 4 };
+
   /** UTILITIES */
   const Utils = {
     rand: (a, b) => Math.random() * (b - a) + a,
@@ -456,18 +570,27 @@
       const ar = ah>>16, ag = (ah>>8)&0xff, ab = ah&0xff, br = bh>>16, bg = (bh>>8)&0xff, bb = bh&0xff;
       return '#' + ((1<<24) + ((ar+(br-ar)*amount)<<16) + ((ag+(bg-ag)*amount)<<8) + (ab+(bb-ab)*amount|0)).toString(16).slice(1);
     },
+    toGray: (hex) => {
+      const val = parseInt(hex.slice(1), 16);
+      const r = val >> 16, g = (val >> 8) & 0xff, b = val & 0xff;
+      const avg = Math.round(0.3 * r + 0.59 * g + 0.11 * b);
+      const part = (avg << 16) | (avg << 8) | avg;
+      return `#${part.toString(16).padStart(6, '0')}`;
+    },
+    chance: (p) => Math.random() < p,
     AABB: (r1, r2) => r1.x < r2.x + r2.w && r1.x + r1.w > r2.x && r1.y < r2.y + r2.h && r1.y + r1.h > r2.y
   };
 
   const StorageManager = {
-    KEY: 'run4fun_save_v10',
+    KEY: 'run4fun_save_v11',
     load: () => {
+      const defaults = { totalStars: 0, unlocked: ['cone'], equipped: null, highScore: 0 };
       try { 
           let data = JSON.parse(localStorage.getItem(StorageManager.KEY));
-          if(!data || !data.unlocked) return { totalStars: 0, unlocked: ['cone'], equipped: null };
-          return data;
+          if(!data || !data.unlocked) return defaults;
+          return { ...defaults, ...data };
       }
-      catch { return { totalStars: 0, unlocked: ['cone'], equipped: null }; }
+      catch { return defaults; }
     },
     save: (data) => localStorage.setItem(StorageManager.KEY, JSON.stringify(data))
   };
@@ -843,10 +966,11 @@
       this.x = 150;
       this.y = groundY - this.size;
       this.vy = 0;
-      this.jumps = 2;
+      this.maxJumps = 2;
+      this.jumps = this.maxJumps;
       this.alive = true;
     }
-    update(dt, platforms, gravity) {
+    update(dt, platforms, gravity, onLand) {
       if (!this.alive) return;
       this.vy += gravity * dt;
       this.y += this.vy * dt;
@@ -858,7 +982,8 @@
           if (prevY <= p.y + 5 && b >= p.y && this.vy >= 0) {
             this.y = p.y - this.size;
             this.vy = 0;
-            this.jumps = 2;
+            this.jumps = this.maxJumps;
+            if(onLand) onLand(p);
           }
         }
       }
@@ -909,7 +1034,7 @@
       this.cvs = document.getElementById("game");
       this.ctx = this.cvs.getContext("2d", { alpha: false });
       this.ui = {
-        score: document.getElementById("score-val"), stars: document.getElementById("stars-val"),
+        score: document.getElementById("score-val"), stars: document.getElementById("stars-val"), highScore: document.getElementById("highscore-val"),
         clock: document.getElementById("clock-canvas"),
         overlay: document.getElementById("overlay-center"), death: document.getElementById("death-screen"), deathSub: document.getElementById("death-sub"),
         shop: document.getElementById("shop-modal"), shopGrid: document.getElementById("shop-grid"), shopStars: document.getElementById("shop-currency"),
@@ -931,7 +1056,27 @@
 
       this.cycle = new DayNightCycle();
       this.data = StorageManager.load();
+      if (typeof this.data.highScore !== 'number') this.data.highScore = 0;
       AssetFactory.init();
+      
+      this.worldTheme = 'normal';
+      this.hellWorldActive = false;
+      this.hellResurrectionUsed = false;
+      this.spaceJourneyActive = false;
+      this.weather = { rain: [] };
+      this.weather.rainTimer = 0;
+      this.passiveFloaters = [];
+      this.discoPulse = 0;
+      this.midasPassiveTimer = 0;
+      this.magusCooldownMax = 25;
+      this.magusCooldown = 0;
+      this.magusShield = 0;
+      this.magusFlash = 0;
+      this.magusSigils = [];
+      this.cowCooldown = 0;
+      this.overlayMessageTime = 0;
+      this.orbit = null;
+      this.currentCycle = this.cycle.get(0);
 
       this.loop = this.loop.bind(this);
       window.addEventListener("resize", () => this.resize());
@@ -982,7 +1127,7 @@
         this.startDelay = false;
         this.ui.overlay.style.opacity = 0;
         this.ui.shopBtn.style.display = "none";
-        this.player.jumps = 2;
+        this.player.jumps = this.player.maxJumps;
         return;
       }
       if (this.cheats.fly) {
@@ -1027,23 +1172,18 @@
     die() {
         if (this.cheats.god) return; 
 
-        if (this.data.equipped === 'wizardMega' && !this.revived) {
-            this.revived = true;
-            this.player.vy = -1200; 
-            this.player.y = this.h - 200; 
-            for(let i=0; i<30; i++) {
-                this.objs.parts.push({
-                    x: this.player.x + 18, y: this.player.y + 18,
-                    vx: Math.cos(i/30 * Math.PI*2) * 500, vy: Math.sin(i/30 * Math.PI*2) * 500,
-                    l: 1.0, c: "#a020f0"
-                });
-            }
+        if (this.isHatActive('wizardMega') && this.magusCooldown <= 0) {
+            this.triggerMagusSave();
+            return;
+        }
+
+        if (this.isHatActive('devil') && !this.hellResurrectionUsed) {
+            this.enterHellWorld();
             return;
         }
 
         this.player.alive = false;
-        this.data.totalStars += this.runStars;
-        StorageManager.save(this.data);
+        this.finalizeRunTotals();
         this.ui.death.style.opacity = 1;
         this.ui.death.className = "active"; 
         this.ui.death.style.pointerEvents = "auto";
@@ -1068,6 +1208,16 @@
       if(open) this.updateShop();
     }
 
+    isHatActive(id) {
+      return this.data.equipped === id;
+    }
+
+    showOverlayMessage(text, duration=1.5) {
+      this.overlayMessageTime = duration;
+      this.ui.overlay.innerText = text;
+      this.ui.overlay.style.opacity = 1;
+    }
+
     updateShop() {
       this.ui.shopStars.innerText = "STARS: " + this.data.totalStars;
       this.ui.shopGrid.innerHTML = '';
@@ -1090,7 +1240,7 @@
         const drawH = art.h * scale;
         ctx.drawImage(art.img, (90-drawW)/2, (90-drawH)/2, drawW, drawH);
 
-        el.innerHTML = `<div class="item-preview"></div><div class="item-name">${item.name}</div><div class="item-price">${owned ? (equipped?'EQUIPPED':'OWNED') : item.price+' Stars'}</div>`;
+        el.innerHTML = `<div class="item-preview"></div><div class="item-name">${item.name}</div><div class="item-price">${owned ? (equipped?'EQUIPPED':'OWNED') : item.price+' Stars'}</div><div class="item-desc">${item.desc || ''}</div>`;
         el.firstChild.appendChild(c);
         
         el.onclick = () => {
@@ -1196,17 +1346,30 @@
       this.time = 0;
       this.pauseTime = 20.0;
       this.isPaused = false;
-      this.revived = false; 
       this.lastT = performance.now();
-      
-      this.objs = { plats: [], stars: [], mults: [], parts: [], birds: [], clouds: [], mtn: { f:[], n:[], h:[] } };
-      this.activeMult = { val: 1, time: 0 };
-      this.bgStars = []; 
-      for(let i=0; i<35; i++) this.bgStars.push({x:Math.random(), y:Math.random(), s:Math.random()*2+1, a:Math.random()});
-      this.shootStar = null;
+
+      this.worldTheme = 'normal';
+      this.hellWorldActive = false;
+      this.hellResurrectionUsed = false;
+      this.spaceJourneyActive = false;
+      this.weather.rain = [];
+      this.weather.rainTimer = 0;
+      this.passiveFloaters = [];
+      this.discoPulse = 0;
+      this.midasPassiveTimer = 0;
+      this.magusShield = 0;
+      this.magusCooldown = 0;
+      this.magusFlash = 0;
+      this.magusSigils = [];
+      this.cowCooldown = 0;
+      this.overlayMessageTime = 0;
+
+      this.buildWorldGeometry();
 
       this.ui.score.innerText = "0";
       this.ui.stars.innerText = this.data.totalStars;
+      this.ui.highScore.innerText = this.data.highScore;
+      this.ui.overlay.innerText = "Tap / Space to Start";
       this.ui.overlay.style.opacity = 1;
       this.ui.death.style.opacity = 0;
       this.ui.death.className = "";
@@ -1214,9 +1377,20 @@
       this.ui.shopBtn.style.display = "block";
       this.ui.mult.className = "";
       this.ui.multTime.innerText = "";
+      this.ui.multTxt.innerText = "";
       this.ui.pause.style.display = "none";
 
       this.initWorld();
+    }
+
+    buildWorldGeometry() {
+      this.objs = { plats: [], stars: [], mults: [], parts: [], birds: [], clouds: [], cows: [], mtn: { f:[], n:[], h:[] } };
+      this.activeMult = { val: 1, time: 0 };
+      this.bgStars = [];
+      for(let i=0; i<35; i++) this.bgStars.push({x:Math.random(), y:Math.random(), s:Math.random()*2+1, a:Math.random()});
+      this.shootStar = null;
+      this.currentCycle = this.cycle.get(this.score || 0);
+      this.orbit = this.computeCelestialState(this.currentCycle.p);
     }
 
     initWorld() {
@@ -1323,21 +1497,315 @@
       this.objs.birds.push({ x:this.w+Utils.rand(50,350), y:Utils.rand(this.h*0.35,this.h*0.55), s:Utils.rand(90,140), flap:0, c:pool[Math.floor(Math.random()*pool.length)] });
     }
 
+    onPlayerLand(platform) {
+      if (this.isHatActive('king')) {
+        this.markMidasPlatform(platform);
+      }
+    }
+
+    markMidasPlatform(platform) {
+      platform.midas = true;
+      platform.midasPulse = 1;
+    }
+
+    grantRunStars(amount, source='star') {
+      const gain = Math.max(0, Math.floor(amount));
+      if(!gain) return;
+      this.runStars += gain;
+      this.ui.stars.innerText = this.data.totalStars + this.runStars;
+      if(source === 'midas-passive') {
+        this.passiveFloaters.push({
+          x: this.player.x + this.player.size/2,
+          y: this.player.y - 10,
+          life: 1,
+          text: `+${gain}`
+        });
+      }
+    }
+
+    finalizeRunTotals() {
+      this.data.totalStars += this.runStars;
+      const roundedScore = Math.floor(this.score);
+      if (roundedScore > this.data.highScore) {
+        this.data.highScore = roundedScore;
+      }
+      StorageManager.save(this.data);
+      this.ui.stars.innerText = this.data.totalStars;
+      this.ui.highScore.innerText = this.data.highScore;
+    }
+
+    determineWorldTheme() {
+      if (this.hellWorldActive) return 'hell';
+      if (this.spaceJourneyActive) return 'moon';
+      if (this.isHatActive('fedora')) return 'noir';
+      if (this.isHatActive('afro')) return 'disco';
+      if (this.isHatActive('spartan')) return 'spartan';
+      return 'normal';
+    }
+
+    handleHatPassives(dt) {
+      this.worldTheme = this.determineWorldTheme();
+      if (this.isHatActive('wizardMega')) {
+        this.player.maxJumps = 3;
+        this.magusCooldown = Math.max(0, this.magusCooldown - dt);
+      } else {
+        this.player.maxJumps = 2;
+        this.magusCooldown = Math.max(0, this.magusCooldown - dt);
+      }
+      this.player.jumps = Math.min(this.player.jumps, this.player.maxJumps);
+
+      if (this.isHatActive('king')) {
+        this.midasPassiveTimer += dt;
+        if (this.midasPassiveTimer >= MIDAS_CONFIG.passiveRate) {
+          this.midasPassiveTimer -= MIDAS_CONFIG.passiveRate;
+          this.grantRunStars(MIDAS_CONFIG.passiveAmount, 'midas-passive');
+        }
+      } else {
+        this.midasPassiveTimer = 0;
+      }
+
+      if (this.isHatActive('fedora')) {
+        this.weather.rainTimer += dt;
+        if (this.weather.rainTimer >= 0.05) {
+          this.weather.rainTimer = 0;
+          this.weather.rain.push({
+            x: Utils.rand(-50, this.w + 50),
+            y: Utils.rand(-40, 0),
+            vy: Utils.rand(420, 620)
+          });
+          if (this.weather.rain.length > 160) this.weather.rain.shift();
+        }
+      } else if (this.weather.rain.length) {
+        this.weather.rain = [];
+        this.weather.rainTimer = 0;
+      }
+      this.weather.rain.forEach(drop => {
+        drop.x -= this.speed * 0.02 * dt;
+        drop.y += drop.vy * dt;
+      });
+      this.weather.rain = this.weather.rain.filter(drop => drop.y < this.h + 40);
+
+      this.magusFlash = Math.max(0, this.magusFlash - dt);
+      this.magusSigils.forEach(s => {
+        s.life -= dt;
+        s.rotation = (s.rotation || 0) + dt * 2;
+      });
+      this.magusSigils = this.magusSigils.filter(s => s.life > 0);
+
+      if (this.isHatActive('afro') && this.orbit?.moon?.visible) {
+        this.discoPulse += dt * 2;
+      } else {
+        this.discoPulse = Math.max(0, this.discoPulse - dt);
+      }
+
+      if (this.isHatActive('astro') && this.orbit?.moon?.visible && !this.spaceJourneyActive) {
+        this.cowCooldown -= dt;
+        if (this.cowCooldown <= 0) {
+          this.spawnSpaceCow();
+          this.cowCooldown = Utils.rand(6, 12);
+        }
+      } else {
+        this.objs.cows = [];
+        this.cowCooldown = Utils.rand(4, 8);
+      }
+
+      if (this.worldTheme === 'hell' && Math.random() < 0.3) {
+        this.objs.parts.push({
+          x: Utils.rand(0, this.w),
+          y: this.h - Utils.rand(40, 200),
+          vx: Utils.rand(-30, 30),
+          vy: Utils.rand(-160, -60),
+          l: Utils.rand(0.3, 0.6),
+          c: "#ff7b00"
+        });
+      }
+
+      if (this.worldTheme === 'moon' && Math.random() < 0.2) {
+        this.objs.parts.push({
+          x: Utils.rand(0, this.w),
+          y: Utils.rand(0, this.h * 0.4),
+          vx: Utils.rand(-20, 20),
+          vy: Utils.rand(-20, -5),
+          l: Utils.rand(0.4, 0.8),
+          c: "#bde0fe"
+        });
+      }
+
+      if (this.worldTheme === 'spartan' && Math.random() < 0.25) {
+        this.objs.parts.push({
+          x: Utils.rand(0, this.w),
+          y: Utils.rand(this.h*0.2, this.h*0.8),
+          vx: Utils.rand(-10, 10),
+          vy: Utils.rand(-50, -5),
+          l: Utils.rand(0.2, 0.5),
+          c: "#ffd29c"
+        });
+      }
+
+      if (this.worldTheme === 'disco' && Math.random() < 0.35) {
+        this.objs.parts.push({
+          x: Utils.rand(0, this.w),
+          y: Utils.rand(0, this.h*0.5),
+          vx: 0,
+          vy: Utils.rand(15, 40),
+          l: Utils.rand(0.3, 0.6),
+          c: `hsla(${Utils.randInt(200,320)},80%,70%,0.6)`
+        });
+      }
+
+      this.updateSpaceCows(dt);
+      this.updatePassiveFloaters(dt);
+      this.magusShield = Math.max(0, this.magusShield - dt);
+    }
+
+    spawnSpaceCow() {
+      if(!this.objs.cows) this.objs.cows = [];
+      const cow = {
+        x: Utils.rand(80, this.w - 80),
+        y: this.h + 60,
+        vx: Utils.rand(-40, 40),
+        vy: -Utils.rand(210, 260),
+        w: 34,
+        h: 26,
+        active: true
+      };
+      this.objs.cows.push(cow);
+    }
+
+    updateSpaceCows(dt) {
+      if(!this.objs.cows) return;
+      const pBox = {x:this.player.x, y:this.player.y, w:this.player.size, h:this.player.size};
+      this.objs.cows.forEach(cow => {
+        cow.x += cow.vx * dt;
+        cow.y += cow.vy * dt;
+        cow.vy -= 20 * dt;
+        if(!cow.active) return;
+        if (Utils.AABB(pBox, {x:cow.x-15, y:cow.y-15, w:cow.w, h:cow.h})) {
+          cow.active = false;
+          this.enterMoonWorld();
+        }
+      });
+      this.objs.cows = this.objs.cows.filter(cow => cow.y > -80 && cow.active !== false);
+    }
+
+    updatePassiveFloaters(dt) {
+      this.passiveFloaters.forEach(f => {
+        f.y -= 40 * dt;
+        f.life -= dt;
+      });
+      this.passiveFloaters = this.passiveFloaters.filter(f => f.life > 0);
+    }
+
+    triggerMagusSave() {
+      this.player.alive = true;
+      this.player.vy = -1200;
+      this.player.y = Math.max(80, this.groundY - this.player.size - 60);
+      this.player.jumps = this.player.maxJumps;
+      this.magusCooldown = this.magusCooldownMax;
+      this.magusShield = 1.6;
+      this.magusFlash = 1.2;
+      this.showOverlayMessage("The Grand Magus rewinds fate", 1.6);
+      const centerX = this.player.x + this.player.size/2;
+      const centerY = this.player.y + this.player.size/2;
+      this.magusSigils.push({
+        x: centerX,
+        y: centerY,
+        radius: 70,
+        life: 1.6,
+        rotation: 0
+      });
+      for(let i=0; i<80; i++) {
+        const angle = (i/80) * Math.PI * 2;
+        const speed = Utils.rand(280, 460);
+        this.objs.parts.push({
+          x: centerX,
+          y: centerY,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          l: 1.4,
+          c: i % 3 === 0 ? "#ffd700" : "#a876ff"
+        });
+      }
+    }
+
+    enterHellWorld() {
+      if (this.hellWorldActive) return;
+      this.hellWorldActive = true;
+      this.hellResurrectionUsed = true;
+      this.worldTheme = 'hell';
+      this.player.alive = true;
+      this.player.y = this.groundY - this.player.size - 20;
+      this.player.vy = -900;
+      this.player.jumps = this.player.maxJumps;
+      this.ui.death.style.opacity = 0;
+      this.ui.death.style.pointerEvents = "none";
+      this.ui.death.className = "";
+      this.ui.shopBtn.style.display = "none";
+      this.ui.mult.className = "";
+      this.ui.multTime.innerText = "";
+      this.startDelay = false;
+      this.buildWorldGeometry();
+      this.initWorld();
+      this.objs.cows = [];
+      this.showOverlayMessage("You fall into the underworld.", 2.2);
+      for(let i=0; i<80; i++) {
+        this.objs.parts.push({
+          x: this.player.x + this.player.size/2,
+          y: this.player.y + this.player.size,
+          vx: Utils.rand(-80, 80),
+          vy: Utils.rand(-20, -260),
+          l: Utils.rand(0.4, 0.9),
+          c: i%2===0 ? "#ff5f1f" : "#ffc857"
+        });
+      }
+    }
+
+    enterMoonWorld() {
+      if (this.spaceJourneyActive) return;
+      this.spaceJourneyActive = true;
+      this.worldTheme = 'moon';
+      this.buildWorldGeometry();
+      this.initWorld();
+      this.objs.cows = [];
+      this.player.y = this.groundY - this.player.size - 10;
+      this.player.vy = -600;
+      this.player.jumps = this.player.maxJumps;
+      this.ui.mult.className = "";
+      this.ui.multTime.innerText = "";
+      this.ui.multTxt.innerText = "";
+      this.showOverlayMessage("Low gravity unlocked.", 2);
+      for(let i=0; i<60; i++) {
+        this.objs.parts.push({
+          x: this.player.x + this.player.size/2,
+          y: this.player.y,
+          vx: Utils.rand(-100, 100),
+          vy: Utils.rand(-200, -40),
+          l: Utils.rand(0.4, 0.8),
+          c: "#c2f6ff"
+        });
+      }
+    }
+
     update(dt) {
       if(!this.player.alive) return;
       
-      const prevP = this.cycle.get(this.score).p;
+      const prevCycle = this.currentCycle || this.cycle.get(this.score);
+      const prevP = prevCycle.p;
       
       if (!this.startDelay) {
         this.speed = Math.min(CONSTANTS.PHYSICS.SPEED_MAX, this.speed + dt * CONSTANTS.PHYSICS.SPEED_INC);
         this.score += (this.speed * dt) * CONSTANTS.PHYSICS.SCORE_MULT;
         this.ui.score.innerText = Math.floor(this.score);
+        this.ui.highScore.innerText = Math.max(this.data.highScore, Math.floor(this.score));
       }
       
-      const currP = this.cycle.get(this.score).p;
+      this.currentCycle = this.cycle.get(this.score);
+      const currP = this.currentCycle.p;
+      this.orbit = this.computeCelestialState(currP);
       this.checkCrackTrigger(prevP, currP);
 
-      const col = this.cycle.get(this.score); 
+      const col = this.currentCycle; 
+      this.handleHatPassives(dt);
 
       // Rare Shooting Stars
       if(!this.shootStar && col.p > 0.55 && col.p < 0.9 && Math.random() < 0.005) {
@@ -1351,15 +1819,17 @@
       }
 
       // Grand Magus Particles
-      if (this.data.equipped === 'wizardMega') {
-         if (Math.random() < 0.3) {
+      if (this.isHatActive('wizardMega')) {
+         if (Math.random() < 0.4) {
+             const angle = Math.random() * Math.PI * 2;
+             const radius = Math.random() * 30;
              this.objs.parts.push({
-                 x: this.player.x + Utils.rand(0, 36),
-                 y: this.player.y + Utils.rand(0, 36),
-                 vx: Utils.rand(-20, 20),
-                 vy: Utils.rand(-50, -10),
-                 l: 0.5,
-                 c: Math.random() > 0.5 ? "#ffd700" : "#a020f0"
+                 x: this.player.x + this.player.size/2 + Math.cos(angle)*radius,
+                 y: this.player.y + this.player.size/2 + Math.sin(angle)*radius,
+                 vx: Math.cos(angle) * 60,
+                 vy: Math.sin(angle) * 60,
+                 l: 0.6,
+                 c: Math.random() > 0.5 ? "#ffd700" : "#a876ff"
              });
          }
       }
@@ -1448,8 +1918,8 @@
         } else {
           s.r += dt*3;
           if(Utils.AABB(pBox, {x:s.x-s.s/2,y:s.y-s.s/2,w:s.s,h:s.s})) {
-            this.runStars += s.val; 
-            this.ui.stars.innerText = this.data.totalStars + this.runStars;
+            const gain = this.isHatActive('king') ? Math.ceil(s.val * MIDAS_CONFIG.starBonus) : s.val;
+            this.grantRunStars(gain, this.isHatActive('king') ? 'star' : 'star');
             s.col = true;
             for(let i=0; i<8; i++) this.objs.parts.push({x:s.x, y:s.y, vx:Utils.rand(-150,150), vy:Utils.rand(-250,-50), l:0.6, c:CONSTANTS.COLORS.STAR});
           }
@@ -1460,7 +1930,14 @@
       this.objs.parts.forEach(p => { p.x+=p.vx*dt; p.y+=p.vy*dt; p.l-=dt; });
       this.objs.parts = this.objs.parts.filter(p => p.l > 0);
 
-      if(!this.startDelay) this.player.update(dt, this.objs.plats, CONSTANTS.PHYSICS.GRAVITY);
+      if(!this.startDelay) this.player.update(dt, this.objs.plats, CONSTANTS.PHYSICS.GRAVITY, (p) => this.onPlayerLand(p));
+      
+      if(this.overlayMessageTime > 0 && !this.startDelay) {
+        this.overlayMessageTime -= dt;
+        if(this.overlayMessageTime <= 0) {
+          this.ui.overlay.style.opacity = 0;
+        }
+      }
       
       if(this.player.y > this.h + CONSTANTS.DIMS.DEATH_Z) {
         this.die();
@@ -1504,49 +1981,118 @@
         ctx.beginPath(); ctx.arc(cx, cy, 26, 0, Math.PI*2); ctx.fill();
     }
 
-    drawCelestialBodies(p) {
-      const ctx = this.ctx;
-      const W = this.w;
-      const H = this.h;
-      
-      // Higher arc
-      const cx = W / 2;
-      const cy = H + 100; 
-      const radius = W / 2 + 150;
-      
+    computeCelestialState(p) {
+      const cx = this.w / 2;
+      const cy = this.h + 100; 
+      const radius = this.w / 2 + 150;
       const angle = (p * 2 * Math.PI) - Math.PI/2;
-      
-      const sx = cx + Math.cos(angle) * radius;
-      const sy = cy + Math.sin(angle) * radius;
-      const mx = cx + Math.cos(angle + Math.PI) * radius;
-      const my = cy + Math.sin(angle + Math.PI) * radius;
+      const sun = { x: cx + Math.cos(angle) * radius, y: cy + Math.sin(angle) * radius };
+      const moon = { x: cx + Math.cos(angle + Math.PI) * radius, y: cy + Math.sin(angle + Math.PI) * radius };
+      sun.visible = sun.y < this.h + 200;
+      moon.visible = moon.y < this.h + 200;
+      return { sun, moon };
+    }
 
-      // Fade logic
-      const drawBody = (x, y, color, glow, isSun) => {
-          if(y < H + 200) {
-              const horizonDist = (H + 200) - y;
-              const alpha = Math.min(1, horizonDist / 200); // Fade out near horizon
-              
-              ctx.globalAlpha = alpha;
-              ctx.fillStyle = color;
-              ctx.shadowBlur = isSun ? 40 : 20; ctx.shadowColor = glow;
-              ctx.beginPath(); ctx.arc(x, y, isSun?40:35, 0, Math.PI*2); ctx.fill();
-              
-              if(isSun) {
-                  ctx.fillStyle = "#FFFFE0";
-                  ctx.beginPath(); ctx.arc(x, y, 30, 0, Math.PI*2); ctx.fill();
-              } else {
-                  ctx.fillStyle = "rgba(0,0,0,0.1)"; 
-                  ctx.beginPath(); ctx.arc(x-10, y-5, 8, 0, Math.PI*2); ctx.fill();
-                  ctx.beginPath(); ctx.arc(x+12, y+10, 5, 0, Math.PI*2); ctx.fill();
-              }
-              ctx.shadowBlur = 0;
-              ctx.globalAlpha = 1;
-          }
+    getWorldColors(col) {
+      const theme = WORLD_THEMES[this.worldTheme] || WORLD_THEMES.normal;
+      const basePlat = WORLD_THEMES.normal.platform;
+      const colors = {
+        skyTop: theme.skyTop || col.skyTop,
+        skyBot: theme.skyBot || col.skyBot,
+        far: theme.far || col.far,
+        near: theme.near || col.near,
+        hills: theme.hills || col.hills,
+        platform: {
+          body: (theme.platform && theme.platform.body) || basePlat.body,
+          top: (theme.platform && theme.platform.top) || basePlat.top
+        },
+        star: theme.star || WORLD_THEMES.normal.star,
+        player: theme.player || WORLD_THEMES.normal.player
+      };
+      if (this.isHatActive('spartan')) {
+        const tint = "#c97b37";
+        colors.skyTop = Utils.lerpColor(colors.skyTop, tint, 0.4);
+        colors.skyBot = Utils.lerpColor(colors.skyBot, "#5f2003", 0.4);
+        colors.far = Utils.lerpColor(colors.far, "#5f3715", 0.5);
+        colors.near = Utils.lerpColor(colors.near, "#8f4a10", 0.5);
+        colors.hills = Utils.lerpColor(colors.hills, "#b35c1f", 0.5);
+      }
+      if (this.isHatActive('fedora')) {
+        const gray = (hex) => Utils.toGray(hex);
+        colors.skyTop = gray(colors.skyTop);
+        colors.skyBot = gray(colors.skyBot);
+        colors.far = gray(colors.far);
+        colors.near = gray(colors.near);
+        colors.hills = gray(colors.hills);
+        colors.platform.body = gray(colors.platform.body);
+        colors.platform.top = gray(colors.platform.top);
+        colors.star = gray(colors.star);
+      }
+      return colors;
+    }
+
+    drawCelestialBodies(col, colors) {
+      const ctx = this.ctx;
+      const orbit = this.orbit || this.computeCelestialState(col.p);
+      const drawBody = (body, color, glow, radius, isSun) => {
+        if(!body.visible) return;
+        const horizonDist = (this.h + 200) - body.y;
+        const alpha = Math.min(1, horizonDist / 200);
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = color;
+        ctx.shadowBlur = isSun ? 40 : 20;
+        ctx.shadowColor = glow;
+        ctx.beginPath();
+        ctx.arc(body.x, body.y, radius, 0, Math.PI*2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+        if(isSun) {
+          ctx.fillStyle = "#ffffe0";
+          ctx.beginPath(); ctx.arc(body.x, body.y, radius - 10, 0, Math.PI*2); ctx.fill();
+        }
+        ctx.restore();
       };
 
-      drawBody(sx, sy, "#FFD700", "orange", true);
-      drawBody(mx, my, "#F5F3CE", "white", false);
+      drawBody(orbit.sun, "#FFD700", "orange", 40, true);
+
+      ctx.save();
+      const moonRadius = 35;
+      if (orbit.moon.visible) {
+        if (this.isHatActive('afro')) {
+          ctx.save();
+          ctx.beginPath();
+          ctx.arc(orbit.moon.x, orbit.moon.y, moonRadius, 0, Math.PI*2);
+          ctx.clip();
+          const step = 6;
+          for(let y=-moonRadius; y<moonRadius; y+=step) {
+            for(let x=-moonRadius; x<moonRadius; x+=step) {
+              const hue = (this.discoPulse * 120 + (x*3) + (y*5)) % 360;
+              ctx.fillStyle = `hsla(${hue}, 80%, 60%, 0.85)`;
+              ctx.fillRect(orbit.moon.x + x, orbit.moon.y + y, step-1, step-1);
+            }
+          }
+          ctx.restore();
+
+          const rayCount = 8;
+          for(let i=0; i<rayCount; i++) {
+            const ang = this.discoPulse + i * (Math.PI * 2 / rayCount);
+            ctx.fillStyle = `hsla(${(this.discoPulse*120 + i*40)%360}, 80%, 50%, 0.25)`;
+            ctx.beginPath();
+            ctx.moveTo(orbit.moon.x, orbit.moon.y);
+            ctx.lineTo(orbit.moon.x + Math.cos(ang)*400, orbit.moon.y + Math.sin(ang)*400);
+            ctx.lineTo(orbit.moon.x + Math.cos(ang + 0.12)*400, orbit.moon.y + Math.sin(ang + 0.12)*400);
+            ctx.closePath();
+            ctx.fill();
+          }
+        } else {
+          drawBody(orbit.moon, "#F5F3CE", "white", moonRadius, false);
+          ctx.fillStyle = "rgba(0,0,0,0.1)"; 
+          ctx.beginPath(); ctx.arc(orbit.moon.x-10, orbit.moon.y-5, 8, 0, Math.PI*2); ctx.fill();
+          ctx.beginPath(); ctx.arc(orbit.moon.x+12, orbit.moon.y+10, 5, 0, Math.PI*2); ctx.fill();
+        }
+      }
+      ctx.restore();
     }
 
     draw() {
@@ -1595,12 +2141,14 @@
           return;
       }
 
-      const col = this.cycle.get(this.score);
+      const col = this.currentCycle || this.cycle.get(this.score);
       
       this.drawClock(col.p);
 
+      const colors = this.getWorldColors(col);
+
       const grad = ctx.createLinearGradient(0,0,0,H);
-      grad.addColorStop(0, col.skyTop); grad.addColorStop(0.5, col.skyBot); grad.addColorStop(1, Utils.lerpColor(col.skyBot, "#ffffff", 0.5));
+      grad.addColorStop(0, colors.skyTop); grad.addColorStop(0.5, colors.skyBot); grad.addColorStop(1, Utils.lerpColor(colors.skyBot, "#ffffff", 0.5));
       ctx.fillStyle = grad; ctx.fillRect(0,0,W,H);
 
       let starAlpha = 0;
@@ -1619,7 +2167,8 @@
           ctx.globalAlpha = 1;
       }
 
-      this.drawCelestialBodies(col.p);
+      this.drawCelestialBodies(col, colors);
+      if (this.worldTheme === 'moon') this.drawMoonBackdrop(ctx);
 
       if(this.shootStar && starAlpha > 0.5) {
           ctx.strokeStyle = "white";
@@ -1632,13 +2181,16 @@
           ctx.globalAlpha = 1;
       }
 
-      const ca = Utils.lerp(1, 0.2, col.p>0.5?(col.p-0.5)*2:0);
-      this.objs.clouds.forEach(c => { 
-        ctx.globalAlpha = c.a*ca; 
-        ctx.fillStyle = "white";
-        c.parts.forEach(p => ctx.fillRect(c.x+p.x, c.y+p.y, p.w, p.h));
-      });
-      ctx.globalAlpha = 1;
+      const allowClouds = !['noir','disco'].includes(this.worldTheme);
+      if (allowClouds) {
+        const ca = Utils.lerp(1, 0.2, col.p>0.5?(col.p-0.5)*2:0);
+        this.objs.clouds.forEach(c => { 
+          ctx.globalAlpha = c.a*ca; 
+          ctx.fillStyle = "white";
+          c.parts.forEach(p => ctx.fillRect(c.x+p.x, c.y+p.y, p.w, p.h));
+        });
+        ctx.globalAlpha = 1;
+      }
 
       const drawMtn = (l, c, isFar) => {
         l.forEach(m => {
@@ -1676,24 +2228,52 @@
           }
         });
       };
-      drawMtn(this.objs.mtn.f, col.far, true);
-      drawMtn(this.objs.mtn.n, col.near, false);
+      const themedBackdrop = ['noir','disco','spartan'].includes(this.worldTheme);
+      if (themedBackdrop) {
+        this.drawThemedBackdrop(ctx);
+      } else {
+        drawMtn(this.objs.mtn.f, colors.far, true);
+        drawMtn(this.objs.mtn.n, colors.near, false);
+        this.objs.birds.forEach(b => {
+          ctx.save(); ctx.translate(b.x, b.y);
+          const frame = Math.floor(b.flap) % 2;
+          const wingColor = this.isHatActive('fedora') ? Utils.toGray(b.c) : b.c;
+          ctx.fillStyle=wingColor; ctx.fillRect(0,0,12,8); ctx.fillRect(12,-4,8,8);
+          ctx.fillStyle="#ff9800"; ctx.fillRect(20,-4,4,4);
+          ctx.fillStyle=wingColor; ctx.globalAlpha=0.85; ctx.fillRect(4, frame===0?-8:4, 8, 8);
+          ctx.restore();
+        });
+        drawMtn(this.objs.mtn.h, colors.hills, false);
+      }
 
-      this.objs.birds.forEach(b => {
-        ctx.save(); ctx.translate(b.x, b.y);
-        const frame = Math.floor(b.flap) % 2;
-        ctx.fillStyle=b.c; ctx.fillRect(0,0,12,8); ctx.fillRect(12,-4,8,8);
-        ctx.fillStyle="#ff9800"; ctx.fillRect(20,-4,4,4);
-        ctx.fillStyle=b.c; ctx.globalAlpha=0.85; ctx.fillRect(4, frame===0?-8:4, 8, 8);
-        ctx.restore();
-      });
+      if (this.worldTheme === 'hell') {
+        this.drawHellFissures(ctx);
+      }
 
-      drawMtn(this.objs.mtn.h, col.hills, false);
+      this.drawSpaceCows(ctx);
 
       ctx.strokeStyle = "rgba(0,0,0,0.3)"; ctx.lineWidth = 2;
       this.objs.plats.forEach(p => {
-        ctx.fillStyle=CONSTANTS.COLORS.PLAT; ctx.fillRect(p.x, p.y, p.w, p.h);
-        ctx.fillStyle=CONSTANTS.COLORS.PLAT_TOP; ctx.fillRect(p.x, p.y, p.w, 6);
+        if (p.midas) {
+          const grd = ctx.createLinearGradient(p.x, p.y, p.x, p.y + p.h);
+          grd.addColorStop(0, "#fff4c3");
+          grd.addColorStop(1, "#d4af37");
+          ctx.fillStyle = grd;
+          ctx.fillRect(p.x, p.y, p.w, p.h);
+          ctx.fillStyle = "#ffeaa7";
+          ctx.fillRect(p.x, p.y, p.w, 6);
+          p.midasPulse = (p.midasPulse ?? 1);
+          ctx.save();
+          ctx.globalAlpha = Math.max(0, p.midasPulse);
+          ctx.strokeStyle = "rgba(255,244,195,0.9)";
+          ctx.lineWidth = 4;
+          ctx.strokeRect(p.x-2, p.y-2, p.w+4, p.h+4);
+          ctx.restore();
+          p.midasPulse = Math.max(0, p.midasPulse - 0.03);
+        } else {
+          ctx.fillStyle=colors.platform.body; ctx.fillRect(p.x, p.y, p.w, p.h);
+          ctx.fillStyle=colors.platform.top; ctx.fillRect(p.x, p.y, p.w, 6);
+        }
         ctx.strokeRect(p.x, p.y, p.w, p.h);
       });
 
@@ -1707,7 +2287,7 @@
         }
       });
 
-      ctx.fillStyle = CONSTANTS.COLORS.STAR; ctx.shadowColor = CONSTANTS.COLORS.STAR; ctx.lineJoin = "round"; ctx.lineWidth = 4;
+      ctx.fillStyle = colors.star; ctx.shadowColor = colors.star; ctx.lineJoin = "round"; ctx.lineWidth = 4;
       this.objs.stars.forEach(s => {
         ctx.save(); ctx.translate(s.x, s.y); ctx.rotate(s.r);
         if(s.col) ctx.globalAlpha = Math.max(0, 1-(s.anim/0.5));
@@ -1726,7 +2306,7 @@
       ctx.globalAlpha = 1;
 
       const pl = this.player;
-      ctx.fillStyle = CONSTANTS.COLORS.PLAYER; ctx.fillRect(pl.x, pl.y, pl.size, pl.size);
+      ctx.fillStyle = colors.player; ctx.fillRect(pl.x, pl.y, pl.size, pl.size);
       ctx.shadowColor = "#e6ac00"; ctx.shadowBlur = 10; ctx.strokeStyle = "rgba(255,255,255,0.4)"; ctx.lineWidth = 2;
       ctx.strokeRect(pl.x, pl.y, pl.size, pl.size); ctx.shadowBlur = 0;
 
@@ -1734,9 +2314,342 @@
         const art = AssetFactory.get(this.data.equipped);
         if (art) {
           const scale = art.h > 10 ? 3 : 4;
-          ctx.drawImage(art.img, pl.x + pl.size/2 - (art.w*scale)/2, pl.y - art.h*scale, art.w*scale, art.h*scale);
+          const cfg = HAT_OVERLAY_CONFIG[this.data.equipped] || {};
+          const hatX = pl.x + pl.size/2 - (art.w*scale)/2;
+          const hatY = pl.y - art.h*scale + (cfg.offsetY || 0);
+          ctx.drawImage(art.img, hatX, hatY, art.w*scale, art.h*scale);
+          if (HAT_OVERLAYS.has(this.data.equipped)) {
+            ctx.save();
+            ctx.globalAlpha = 0.3;
+            ctx.fillStyle = "rgba(0,0,0,0.35)";
+            ctx.fillRect(pl.x, pl.y - 2, pl.size, 12);
+            ctx.restore();
+          }
         }
       }
+
+      if (this.isHatActive('fedora')) {
+        this.drawDetectiveAccessories(ctx, pl);
+      }
+
+      if (this.isHatActive('spartan')) {
+        this.drawSpartanSword(ctx, pl);
+      }
+
+      this.drawMagusEffects(ctx, pl);
+
+      this.drawPassiveFloatersDisplay(ctx);
+
+      if (this.isHatActive('fedora')) {
+        this.drawNoirOverlay(ctx);
+      }
+
+      this.drawDrizzle(ctx);
+
+      if (this.worldTheme === 'hell') {
+        this.drawHeatHaze(ctx);
+      }
+
+      if (this.worldTheme === 'moon') {
+        this.drawMoonDust(ctx);
+      }
+
+      if (this.isHatActive('spartan')) {
+        this.drawSpartanTint(ctx);
+      }
+    }
+
+    drawSpaceCows(ctx) {
+      if(!this.objs.cows || !this.objs.cows.length) return;
+      ctx.save();
+      this.objs.cows.forEach(cow => {
+        ctx.save();
+        ctx.translate(cow.x, cow.y);
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(-14, -8, 28, 16);
+        ctx.fillStyle = "#222";
+        ctx.fillRect(4, -6, 10, 8);
+        ctx.fillStyle = "#f47c7c";
+        ctx.fillRect(-12, 4, 6, 4);
+        ctx.restore();
+      });
+      ctx.restore();
+    }
+
+    drawDrizzle(ctx) {
+      if(!this.weather.rain.length) return;
+      ctx.save();
+      ctx.strokeStyle = "rgba(180,200,255,0.45)";
+      ctx.lineWidth = 1;
+      this.weather.rain.forEach(drop => {
+        ctx.beginPath();
+        ctx.moveTo(drop.x, drop.y);
+        ctx.lineTo(drop.x - 1.5, drop.y + 8);
+        ctx.stroke();
+      });
+      ctx.restore();
+    }
+
+    drawPassiveFloatersDisplay(ctx) {
+      if(!this.passiveFloaters.length) return;
+      ctx.save();
+      ctx.font = "14px 'Segoe UI', sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillStyle = "#ffd700";
+      this.passiveFloaters.forEach(f => {
+        ctx.globalAlpha = Math.max(0, f.life);
+        ctx.fillText(f.text, f.x, f.y);
+      });
+      ctx.restore();
+    }
+
+    drawNoirOverlay(ctx) {
+      ctx.save();
+      ctx.globalAlpha = 0.08;
+      ctx.strokeStyle = "rgba(255,255,255,0.1)";
+      for(let i=0; i<35; i++) {
+        const x = Math.random()*this.w;
+        const len = Math.random()* this.h*0.4;
+        ctx.beginPath();
+        ctx.moveTo(x, Math.random()*this.h);
+        ctx.lineTo(x+1, Math.random()*this.h);
+        ctx.stroke();
+      }
+      ctx.globalAlpha = 0.12;
+      for(let i=0; i<120; i++) {
+        ctx.fillStyle = `rgba(255,255,255,${Math.random()*0.6})`;
+        const size = Math.random()*1.5;
+        ctx.fillRect(Math.random()*this.w, Math.random()*this.h, size, size);
+      }
+      ctx.restore();
+    }
+
+    drawHeatHaze(ctx) {
+      ctx.save();
+      const grad = ctx.createLinearGradient(0, this.h*0.5, 0, this.h);
+      grad.addColorStop(0, "rgba(255,100,0,0)");
+      grad.addColorStop(1, "rgba(255,80,0,0.35)");
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, this.h*0.5, this.w, this.h*0.5);
+      ctx.restore();
+    }
+
+    drawMoonDust(ctx) {
+      ctx.save();
+      ctx.globalAlpha = 0.12;
+      ctx.fillStyle = "#c2f6ff";
+      for(let i=0; i<25; i++) {
+        ctx.beginPath();
+        ctx.arc(Math.random()*this.w, Math.random()*this.h*0.6, Math.random()*3+1, 0, Math.PI*2);
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+
+    drawMoonBackdrop(ctx) {
+      ctx.save();
+      ctx.globalAlpha = 0.8;
+      ctx.fillStyle = "#1e88e5";
+      ctx.beginPath();
+      ctx.arc(this.w - 120, 140, 90, 0, Math.PI*2);
+      ctx.fill();
+      ctx.fillStyle = "#a5d6ff";
+      ctx.beginPath();
+      ctx.moveTo(this.w - 150, 110);
+      ctx.bezierCurveTo(this.w - 100, 80, this.w - 40, 120, this.w - 80, 150);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(this.w - 90, 190);
+      ctx.bezierCurveTo(this.w - 60, 170, this.w - 20, 210, this.w - 70, 220);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    drawDetectiveAccessories(ctx, pl) {
+      ctx.save();
+      ctx.strokeStyle = "#f9f6d2";
+      ctx.lineWidth = 2;
+      const eyeX = pl.x + pl.size*0.7;
+      const eyeY = pl.y + pl.size*0.4;
+      ctx.beginPath();
+      ctx.arc(eyeX, eyeY, 6, 0, Math.PI*2);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(eyeX, eyeY + 6);
+      ctx.lineTo(eyeX, eyeY + 16);
+      ctx.stroke();
+      ctx.fillStyle = "#5d4037";
+      ctx.fillRect(pl.x + pl.size*0.2, pl.y + pl.size*0.7, 20, 4);
+      ctx.fillStyle = "#3e2723";
+      ctx.fillRect(pl.x + pl.size*0.2 - 4, pl.y + pl.size*0.7 - 4, 10, 10);
+      ctx.restore();
+    }
+
+    drawSpartanSword(ctx, pl) {
+      ctx.save();
+      ctx.fillStyle = "#c0c0c0";
+      ctx.fillRect(pl.x + pl.size + 6, pl.y + pl.size*0.4, 36, 6);
+      ctx.fillStyle = "#8b4513";
+      ctx.fillRect(pl.x + pl.size, pl.y + pl.size*0.35, 10, 16);
+      ctx.restore();
+    }
+
+    drawSpartanTint(ctx) {
+      ctx.save();
+      const grad = ctx.createLinearGradient(0,0,0,this.h);
+      grad.addColorStop(0, "rgba(255,215,160,0.06)");
+      grad.addColorStop(1, "rgba(120,40,10,0.18)");
+      ctx.fillStyle = grad;
+      ctx.fillRect(0,0,this.w,this.h);
+      ctx.restore();
+    }
+
+    drawMagusEffects(ctx, pl) {
+      if (this.magusShield > 0.01) {
+        ctx.save();
+        ctx.globalAlpha = Math.min(1, this.magusShield);
+        ctx.strokeStyle = "rgba(168,118,255,0.8)";
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.arc(pl.x + pl.size/2, pl.y + pl.size/2, 40, 0, Math.PI*2);
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      if (this.magusSigils.length) {
+        ctx.save();
+        this.magusSigils.forEach(s => {
+          ctx.globalAlpha = Math.max(0, s.life);
+          ctx.strokeStyle = "rgba(168,118,255,0.7)";
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.arc(s.x, s.y, s.radius * (s.life+0.2), 0, Math.PI*2);
+          ctx.stroke();
+          ctx.save();
+          ctx.translate(s.x, s.y);
+          ctx.rotate(s.rotation || 0);
+          ctx.strokeStyle = "rgba(255,215,128,0.5)";
+          ctx.beginPath();
+          ctx.rect(-s.radius*0.6, -s.radius*0.6, s.radius*1.2, s.radius*1.2);
+          ctx.stroke();
+          ctx.restore();
+        });
+        ctx.restore();
+      }
+
+      if (this.magusFlash > 0) {
+        ctx.save();
+        ctx.globalAlpha = this.magusFlash * 0.25;
+        ctx.fillStyle = "#c9a3ff";
+        ctx.fillRect(0,0,this.w,this.h);
+        ctx.restore();
+      }
+
+      if (this.isHatActive('wizardMega')) {
+        const cd = Math.max(0, this.magusCooldown);
+        ctx.save();
+        ctx.font = "12px 'Segoe UI', sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillStyle = cd <= 0.1 ? "#e9d4ff" : "rgba(255,255,255,0.8)";
+        const label = cd <= 0.1 ? "MAGUS READY" : `MAGUS ${Math.ceil(cd)}s`;
+        ctx.fillText(label, pl.x + pl.size/2, pl.y - 50);
+        ctx.restore();
+      }
+    }
+
+    drawThemedBackdrop(ctx) {
+      if (this.worldTheme === 'noir') {
+        this.drawNoirCity(ctx);
+      } else if (this.worldTheme === 'disco') {
+        this.drawDiscoBackdrop(ctx);
+      } else if (this.worldTheme === 'spartan') {
+        this.drawSpartanBackdrop(ctx);
+      }
+    }
+
+    drawNoirCity(ctx) {
+      ctx.save();
+      ctx.fillStyle = "#0a0c14";
+      ctx.fillRect(0, this.h*0.6, this.w, this.h*0.4);
+      for(let i=0; i<22; i++) {
+        const w = Utils.rand(40, 90);
+        const h = Utils.rand(this.h*0.2, this.h*0.45);
+        const x = i * (this.w/20) + Utils.rand(-20, 20);
+        const y = this.h*0.6 - h;
+        ctx.fillStyle = `rgba(15,18,30,${Utils.rand(0.6,0.95)})`;
+        ctx.fillRect(x, y, w, h);
+        for(let wy=y+10; wy<y+h; wy+=12) {
+          for(let wx=x+6; wx<x+w-6; wx+=10) {
+            if(Math.random() < 0.3) {
+              ctx.fillStyle = "rgba(255,255,200,0.4)";
+              ctx.fillRect(wx, wy, 3, 6);
+            }
+          }
+        }
+      }
+      ctx.fillStyle = "#1c1e2b";
+      ctx.fillRect(0, this.h*0.68, this.w, 20);
+      ctx.restore();
+    }
+
+    drawDiscoBackdrop(ctx) {
+      ctx.save();
+      const grad = ctx.createLinearGradient(0,0,0,this.h);
+      grad.addColorStop(0, "rgba(72,12,168,0.7)");
+      grad.addColorStop(1, "rgba(3,4,94,0.9)");
+      ctx.fillStyle = grad;
+      ctx.fillRect(0,0,this.w,this.h);
+      ctx.strokeStyle = "rgba(138,196,255,0.3)";
+      ctx.lineWidth = 1;
+      for(let y=this.h*0.5; y<this.h; y+=25) {
+        ctx.beginPath();
+        ctx.moveTo(0,y);
+        ctx.lineTo(this.w,y+20);
+        ctx.stroke();
+      }
+      for(let x=0; x<this.w; x+=40) {
+        ctx.beginPath();
+        ctx.moveTo(x, this.h*0.5);
+        ctx.lineTo(x+30, this.h);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    drawSpartanBackdrop(ctx) {
+      ctx.save();
+      const sunGrad = ctx.createRadialGradient(this.w*0.3, this.h*0.35, 10, this.w*0.3, this.h*0.35, 120);
+      sunGrad.addColorStop(0, "rgba(255,214,153,0.8)");
+      sunGrad.addColorStop(1, "rgba(255,90,60,0)");
+      ctx.fillStyle = sunGrad;
+      ctx.beginPath();
+      ctx.arc(this.w*0.3, this.h*0.35, 120, 0, Math.PI*2);
+      ctx.fill();
+      ctx.fillStyle = "rgba(33,0,0,0.5)";
+      ctx.beginPath();
+      ctx.moveTo(0, this.h*0.75);
+      ctx.lineTo(this.w*0.4, this.h*0.45);
+      ctx.lineTo(this.w*0.7, this.h*0.7);
+      ctx.lineTo(this.w, this.h*0.55);
+      ctx.lineTo(this.w, this.h);
+      ctx.lineTo(0,this.h);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    }
+
+    drawHellFissures(ctx) {
+      ctx.save();
+      for(let i=0; i<12; i++) {
+        const x = Math.random()*this.w;
+        ctx.strokeStyle = "rgba(255,80,0,0.35)";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(x, this.h);
+        ctx.lineTo(x + Utils.rand(-40, 40), this.h - Utils.rand(50, 120));
+        ctx.stroke();
+      }
+      ctx.restore();
     }
 
     loop(now) {
