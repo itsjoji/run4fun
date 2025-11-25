@@ -38,28 +38,31 @@
 
   /* HUD CONTAINER */
   #hud-container {
-    position: absolute; top: 22px; left: 50%;
-    transform: translateX(-50%);
+    position: absolute; top: 22px; left: 22px;
+    transform: none;
     display: flex; gap: 16px;
     z-index: 12; pointer-events: none;
+    flex-direction: row;
+    align-items: center;
   }
 
   #hud-stats {
     display: flex; gap: 16px;
     font-family: var(--font-impact);
     letter-spacing: 1px;
+    flex-direction: row;
   }
 
   .hud-box {
-    min-width: 140px;
-    padding: 12px 18px;
+    min-width: 120px;
+    padding: 8px 14px;
     border-radius: 14px;
-    background: rgba(6, 16, 40, 0.65);
-    border: 1px solid rgba(255,255,255,0.15);
-    box-shadow: 0 8px 18px rgba(0,0,0,0.35);
+    background: rgba(6, 16, 40, 0.45);
+    border: 1px solid rgba(255,255,255,0.1);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
     backdrop-filter: blur(8px);
     display: flex; align-items: center;
-    gap: 12px;
+    gap: 10px;
     position: relative;
     overflow: hidden;
   }
@@ -74,17 +77,17 @@
   }
 
   .hud-box .hud-icon {
-    width: 34px; height: 34px;
+    width: 28px; height: 28px;
     border-radius: 10px;
     display: flex; align-items: center; justify-content: center;
-    font-size: 18px;
-    background: rgba(255,255,255,0.08);
-    box-shadow: inset 0 0 12px rgba(0,0,0,0.4);
+    font-size: 14px;
+    background: rgba(255,255,255,0.05);
+    box-shadow: inset 0 0 8px rgba(0,0,0,0.3);
   }
 
   .hud-body { display: flex; flex-direction: column; }
-  .hud-label { font-size: 10px; color: rgba(255,255,255,0.6); text-transform: uppercase; }
-  .hud-value { font-size: 24px; color: white; text-shadow: 0 0 8px rgba(0,0,0,0.6); }
+  .hud-label { font-size: 8px; color: rgba(255,255,255,0.5); text-transform: uppercase; }
+  .hud-value { font-size: 18px; color: white; text-shadow: 0 0 6px rgba(0,0,0,0.5); }
   #hud-stars .hud-icon { background: rgba(255, 215, 0, 0.15); color: #ffd700; }
   #hud-highscore .hud-icon { background: rgba(102, 217, 255, 0.2); color: #66d9ff; }
 
@@ -103,14 +106,14 @@
 
   /* --- MULTIPLIER --- */
   #multiplier-container {
-    position: absolute; top: 100px; left: 50%;
-    transform: translateX(-50%) scale(0.8);
+    position: absolute; top: 35%; left: 50%;
+    transform: translate(-50%, -50%) scale(0.8);
     font-family: var(--font-impact); text-transform: uppercase;
     color: #ffd700; opacity: 0; pointer-events: none; z-index: 12;
     transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     display: flex; flex-direction: column; align-items: center;
   }
-  #multiplier-container.active { opacity: 1; transform: translateX(-50%) scale(1); }
+  #multiplier-container.active { opacity: 1; transform: translate(-50%, -50%) scale(1); }
   
   #multiplier-text {
     font-size: 50px; font-weight: 900; -webkit-text-stroke: 2px black;
@@ -122,6 +125,16 @@
     0% { text-shadow: 0 0 15px #ff0000; } 20% { text-shadow: 0 0 15px #ffff00; }
     40% { text-shadow: 0 0 15px #00ff00; } 60% { text-shadow: 0 0 15px #00ffff; }
     80% { text-shadow: 0 0 15px #0000ff; } 100% { text-shadow: 0 0 15px #ff00ff; }
+  }
+
+  @keyframes rainbow-border {
+    0% { border-color: #ff0000; box-shadow: 0 0 20px #ff0000; }
+    16.67% { border-color: #ffff00; box-shadow: 0 0 20px #ffff00; }
+    33.33% { border-color: #00ff00; box-shadow: 0 0 20px #00ff00; }
+    50% { border-color: #00ffff; box-shadow: 0 0 20px #00ffff; }
+    66.67% { border-color: #0000ff; box-shadow: 0 0 20px #0000ff; }
+    83.33% { border-color: #ff00ff; box-shadow: 0 0 20px #ff00ff; }
+    100% { border-color: #ff0000; box-shadow: 0 0 20px #ff0000; }
   }
 
   /* --- SHOP BUTTON --- */
@@ -161,23 +174,24 @@
     overflow-y: auto;
   }
   #shop-title {
-    font-family: var(--font-impact); font-size: 50px; color: white;
-    text-transform: uppercase; text-shadow: 3px 3px 0 #bd00ff; letter-spacing: 2px; margin-bottom: 10px;
+    font-family: var(--font-impact); font-size: 35px; color: white;
+    text-transform: uppercase; text-shadow: 3px 3px 0 #bd00ff; letter-spacing: 2px; margin-bottom: 8px;
   }
   #shop-currency {
-    color: #ffd700; font-size: 20px; font-family: var(--font-mono);
-    padding: 8px 25px; border: 1px solid #ffd700; border-radius: 20px;
-    background: rgba(0,0,0,0.5); box-shadow: 0 0 10px rgba(255,215,0,0.2); margin-bottom: 40px;
+    color: #ffd700; font-size: 14px; font-family: var(--font-mono);
+    padding: 6px 20px; border: 1px solid #ffd700; border-radius: 20px;
+    background: rgba(0,0,0,0.5); box-shadow: 0 0 10px rgba(255,215,0,0.2); margin-bottom: 15px;
   }
   #shop-grid {
-    display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-    gap: 25px; width: 100%; max-width: 900px; padding: 20px;
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 15px; width: 100%; max-width: 800px; padding: 20px;
   }
   .shop-item {
     background: linear-gradient(135deg, #2a2a3a, #151520); border: 2px solid #333;
-    display: flex; flex-direction: column; align-items: center; padding: 15px;
+    display: flex; flex-direction: column; align-items: center; padding: 10px;
     cursor: pointer; position: relative; transform: skewX(-5deg);
-    box-shadow: 0 4px 10px rgba(0,0,0,0.3); border-bottom-width: 5px; transition: all 0.2s ease;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3); border-bottom-width: 4px; transition: all 0.2s ease;
+    min-width: 0;
   }
   .shop-item:hover { transform: scale(1.05) skewX(-5deg); border-color: white; z-index: 2; box-shadow: 0 8px 20px rgba(0,0,0,0.5); }
   
@@ -186,7 +200,11 @@
   .shop-item[data-r="rare"] { border-bottom-color: var(--r-rare); }
   .shop-item[data-r="epic"] { border-bottom-color: var(--r-epic); }
   .shop-item[data-r="legendary"] { border-bottom-color: var(--r-legendary); }
-  .shop-item[data-r="mythic"] { border-bottom-color: var(--r-mythic); box-shadow: 0 0 20px var(--r-mythic); }
+  .shop-item[data-r="mythic"] { 
+    border: 2px solid #ff0000;
+    box-shadow: 0 0 20px #ff0000;
+    animation: rainbow-border 2s linear infinite;
+  }
   
   .shop-item.equipped { border-color: #ffd700; box-shadow: 0 0 15px rgba(255,215,0,0.6); }
   .shop-item.equipped::after {
@@ -194,27 +212,28 @@
     color: black; font-weight: bold; font-size: 10px; padding: 2px 8px; transform: skewX(5deg);
   }
   .item-preview {
-    width: 110px; height: 110px; background: rgba(0,0,0,0.3);
-    margin-bottom: 15px; display: flex; justify-content: center; align-items: center; 
+    width: 80px; height: 80px; background: rgba(0,0,0,0.3);
+    margin-bottom: 8px; display: flex; justify-content: center; align-items: center; 
     border-radius: 4px;
     transform: skewX(5deg);
   }
-  .item-preview canvas { width: 90px; height: 90px; image-rendering: pixelated; } 
+  .item-preview canvas { width: 70px; height: 70px; image-rendering: pixelated; } 
   
-  .item-name { color: white; font-weight: 800; font-size: 16px; margin-bottom: 5px; text-align: center; text-transform: uppercase; transform: skewX(5deg); }
+  .item-name { color: white; font-weight: 800; font-size: 12px; margin-bottom: 3px; text-align: center; text-transform: uppercase; transform: skewX(5deg); }
   .shop-item[data-r="mythic"] .item-name { color: var(--r-mythic); }
-  .item-price { color: #ffd700; font-size: 14px; font-family: var(--font-mono); font-weight: bold; transform: skewX(5deg); }
+  .item-price { color: #ffd700; font-size: 11px; font-family: var(--font-mono); font-weight: bold; transform: skewX(5deg); }
   .item-desc {
-    margin-top: 6px;
-    font-size: 12px;
-    color: rgba(255,255,255,0.8);
+    margin-top: 3px;
+    font-size: 10px;
+    color: rgba(255,255,255,0.7);
     text-align: center;
     font-family: var(--font-main);
     transform: skewX(5deg);
-    min-height: 32px;
+    min-height: 24px;
   }
 
   #shop-close {
+    display: none; /* Hidden - click outside items to close shop */
     margin-top: 40px; background: #b00; color: white; border: none;
     padding: 15px 60px; font-size: 24px; font-family: var(--font-impact);
     cursor: pointer; transform: skewX(-10deg); text-transform: uppercase; letter-spacing: 1px;
@@ -444,11 +463,12 @@
   const PIXEL_DATA = {
     // ITEMS
     cone: { colors: { 1:"#ff6600", 2:"#ffffff" }, map: ["000010000","000010000","000111000","000111000","001111100","001111100","022222220","111111111"] },
-    bandana: { colors: { 1:"#3366cc", 2:"#224488" }, map: ["000000000","111111111","121212121","111111111","100000001","100000001","200000002"] },
+    bandana: { colors: { 1:"#8B4513", 2:"#654321", 3:"#DAA520" }, map: ["00111100","01222210","12222221","12233221","01222210","00111100"] },
     beanie: { colors: { 1:"#9b59b6", 2:"#6c3483", 3:"#f8e9ff" }, map: ["000111100","001333110","013333311","111222111","111222111","111111111"] },
     sprout: { colors: { 1:"#81c784", 2:"#558b2f" }, map: ["000010000","000121000","001121100","001111100","011111110","111111111"] },
     visor: { colors: { 1:"#1abc9c", 2:"#117a65", 3:"#ecf0f1" }, map: ["000000000","001111100","011222110","011222110","001333100","000111000"] },
     goggles: { colors: { 1:"#263238", 2:"#90caf9", 3:"#e3f2fd" }, map: ["000000000","111000011","122000021","122000021","133000031","011111110"] },
+    cyberglasses: { colors: { 1:"#00ff00", 2:"#00dd00", 3:"#0088ff", 4:"#00ffff" }, map: ["001111100","012222210","122333221","122333221","122333221","012222210","001111100"] },
     fedora: { colors: { 1:"#5d4037", 2:"#3e2723", 3:"#111" }, map: ["000111100","001111110","001121110","011111111","133333333","111111111"] },
     safety: { colors: { 1:"#ffeb3b", 2:"#fbc02d" }, map: ["000111100","001111110","011111111","111222111","111111111","111111111"] },
     afro: { colors: { 1:"#212121", 2:"#424242" }, map: ["001111100","011211110","111112111","112111111","111111211","111111111","011111110"] },
@@ -464,33 +484,45 @@
     "5": { colors: { 1: "#ffffff" }, map: ["111000101","100000101","111000010","001000101","111000101"] }
   };
 
+  // Shop inventory with item data: id (pixel art key), name, price (in stars), rarity tier, description
+  // Sorted by: rarity (common → uncommon → rare → epic → legendary → mythic), then price (low to high)
   const SHOP_ITEMS = [
-    { id: 'cone', name: 'Traffic Cone', price: 0, rarity: 'common', desc: 'Found on the side of the road. Smells like victory.' },
-    { id: 'bandana', name: 'Blue Bandana', price: 25, rarity: 'common', desc: 'Keeps sweat, style, and secrets in place.' },
-    { id: 'safety', name: 'Safety First', price: 100, rarity: 'uncommon', desc: 'Industrial strength confidence booster.' },
-    { id: 'visor', name: 'Neon Visor', price: 140, rarity: 'uncommon', desc: 'For players who see the sun maybe once a week.' },
-    { id: 'fedora', name: 'Detective Hat', price: 320, rarity: 'rare', desc: 'Rainy alley vibes included. Case files sold separately.' },
-    { id: 'afro', name: 'Disco King', price: 420, rarity: 'rare', desc: 'All-night groove aura. Batteries not required.' },
-    { id: 'spartan', name: 'Spartan Helm', price: 650, rarity: 'epic', desc: 'There is only one rule: no one kicks the player.' },
-    { id: 'goggles', name: 'Trail Goggles', price: 900, rarity: 'epic', desc: 'Keeps wind, bugs, and responsibility away.' },
-    { id: 'king', name: 'Royal Crown', price: 2200, rarity: 'legendary', desc: 'Turns touch into treasure. Handle with silk gloves.' },
-    { id: 'wizardMega', name: 'Grand Magus', price: 2500, rarity: 'legendary', desc: 'Reality bends, particles swirl, mistakes get rewound.' },
-    { id: 'astro', name: 'Space Walker', price: 1500, rarity: 'mythic', desc: 'Moon boots, cow sightings, and zero-g swagger.' },
-    { id: 'devil', name: 'Lil\' Horns', price: 1600, rarity: 'mythic', desc: 'A souvenir from the subterranean commute.' }
+    // Common items
+    { id: 'cone', name: 'Traffic Cone', price: 0, rarity: 'common', desc: 'A distinctly orange cone.' },
+    { id: 'bandana', name: 'Cowboy Hat', price: 25, rarity: 'common', desc: 'Brown felt crown.' },
+    // Uncommon items
+    { id: 'safety', name: 'Safety First', price: 100, rarity: 'uncommon', desc: 'Bright and reflective.' },
+    { id: 'visor', name: 'Neon Visor', price: 140, rarity: 'uncommon', desc: 'Luminous headwear.' },
+    // Rare items
+    { id: 'spartan', name: 'Spartan Helm', price: 300, rarity: 'rare', desc: 'Ancient and stoic.' },
+    { id: 'afro', name: 'Disco King', price: 420, rarity: 'rare', desc: 'Of another era.' },
+    // Epic items
+    { id: 'cyberglasses', name: 'Cyber Glasses', price: 900, rarity: 'epic', desc: 'Not quite real.' },
+    { id: 'fedora', name: 'Detective Hat', price: 1950, rarity: 'epic', desc: 'Shrouded in mystery.' },
+    // Legendary items
+    { id: 'king', name: 'Midas Crown', price: 2200, rarity: 'legendary', desc: 'Everything turns to gold.' },
+    { id: 'wizardMega', name: 'Grand Magus', price: 2500, rarity: 'legendary', desc: 'Arcane essence.' },
+    // Mythic items
+    { id: 'astro', name: 'Space Walker', price: 10000, rarity: 'mythic', desc: '...' },
+    { id: 'devil', name: 'Lil\' Horns', price: 6666, rarity: 'mythic', desc: '...' }
   ];
 
   const CONSTANTS = {
+    // Physics parameters: gravity acceleration (px/ms²), jump velocity (px/ms), speed values (px/ms)
     PHYSICS: { GRAVITY: 1800, JUMP: -760, SPEED_START: 260, SPEED_MAX: 900, SPEED_INC: 8, SCORE_MULT: 0.15 },
+    // Dimensions: player size, platform height, star size (all in pixels), ground offset, death zone threshold
     DIMS: { PLAYER: 36, PLAT_H: 24, STAR: 24, GROUND_OFF: 140, DEATH_Z: 100 },
+    // Generation parameters: gap ranges (px), platform width ranges (px), vertical variation (px), spawn chances
     GEN: { 
-        GAP: {MIN:80, MAX:400}, 
-        WIDTH: {MIN:260, MAX:480}, 
-        Y_VAR: {MIN:-50, MAX:90},
-        STAR_C: 0.4, 
-        GAP_STAR_C: 0.1, 
-        MULT_C: 0.06, 
-        CYCLE: 15000 // 15k Cycle
+        GAP: {MIN:80, MAX:400},        // Vertical gap between platforms
+        WIDTH: {MIN:260, MAX:480},     // Platform width variation
+        Y_VAR: {MIN:-50, MAX:90},      // Vertical position variation
+        STAR_C: 0.4,                   // Star spawn chance (40%)
+        GAP_STAR_C: 0.1,               // Star in gap chance (10%)
+        MULT_C: 0.06,                  // Multiplier spawn chance (6%)
+        CYCLE: 15000                   // World theme cycle duration (15 seconds)
     },
+    // Color palette: platforms, player, stars, birds
     COLORS: { PLAT: "#5d4037", PLAT_TOP: "#4caf50", PLAYER: "#ffd42a", STAR: "#ffd700", BIRDS_C: ["#f0f8ff","#808080","#333333"], BIRDS_R: ["#aeea00","#ff0055","#00ccff"] }
   };
 
@@ -552,24 +584,31 @@
     }
   };
 
-  const HAT_OVERLAYS = new Set(['astro', 'spartan']);
+  const HAT_OVERLAYS = new Set(['astro', 'spartan', 'cyberglasses']);
   const HAT_OVERLAY_CONFIG = {
     astro: { offsetY: 6 },
-    spartan: { offsetY: 4 }
+    spartan: { offsetY: 12 },
+    cyberglasses: { offsetY: 10 }
   };
   const MIDAS_CONFIG = { passiveRate: 2.5, passiveAmount: 2, starBonus: 4 };
 
-  /** UTILITIES */
+  /** UTILITIES - Helper functions for math, colors, collision, and random values */
   const Utils = {
+    // Generate random float between a and b (inclusive)
     rand: (a, b) => Math.random() * (b - a) + a,
+    // Generate random integer between a and b (inclusive)
     randInt: (a, b) => Math.floor(Math.random() * (b - a + 1)) + a,
+    // Constrain value v between bounds a and b
     clamp: (v, a, b) => Math.max(a, Math.min(b, v)),
+    // Linear interpolation between a and b with parameter t (0-1)
     lerp: (a, b, t) => a + (b - a) * t,
+    // Interpolate between two hex colors based on amount (0-1)
     lerpColor: (a, b, amount) => {
       const ah = parseInt(a.slice(1), 16), bh = parseInt(b.slice(1), 16);
       const ar = ah>>16, ag = (ah>>8)&0xff, ab = ah&0xff, br = bh>>16, bg = (bh>>8)&0xff, bb = bh&0xff;
       return '#' + ((1<<24) + ((ar+(br-ar)*amount)<<16) + ((ag+(bg-ag)*amount)<<8) + (ab+(bb-ab)*amount|0)).toString(16).slice(1);
     },
+    // Convert hex color to grayscale using luminance formula
     toGray: (hex) => {
       const val = parseInt(hex.slice(1), 16);
       const r = val >> 16, g = (val >> 8) & 0xff, b = val & 0xff;
@@ -577,12 +616,16 @@
       const part = (avg << 16) | (avg << 8) | avg;
       return `#${part.toString(16).padStart(6, '0')}`;
     },
+    // Return true with probability p (0-1)
     chance: (p) => Math.random() < p,
+    // AABB collision detection: returns true if rectangles r1 and r2 overlap
     AABB: (r1, r2) => r1.x < r2.x + r2.w && r1.x + r1.w > r2.x && r1.y < r2.y + r2.h && r1.y + r1.h > r2.y
   };
 
+  // StorageManager: Handles persistent game data using browser localStorage
   const StorageManager = {
-    KEY: 'run4fun_save_v11',
+    KEY: 'run4fun_save_v11', // Unique key for this game's save data
+    // Load game state from localStorage or return default values
     load: () => {
       const defaults = { totalStars: 0, unlocked: ['cone'], equipped: null, highScore: 0 };
       try { 
@@ -592,16 +635,20 @@
       }
       catch { return defaults; }
     },
+    // Save game state to localStorage
     save: (data) => localStorage.setItem(StorageManager.KEY, JSON.stringify(data))
   };
 
+  // AssetFactory: Converts pixel art data into canvas-based sprite assets
   const AssetFactory = {
-    cache: {},
+    cache: {}, // Cached canvas elements for each item
+    // Initialize all pixel art sprites from PIXEL_DATA
     init() {
       Object.keys(PIXEL_DATA).forEach(key => {
         this.cache[key] = this.createCanvas(PIXEL_DATA[key]);
       });
     },
+    // Convert pixel art object (colors + map) into a canvas element
     createCanvas(art) {
       const rows = art.map.length, cols = art.map[0].length;
       const cvs = document.createElement('canvas');
@@ -617,6 +664,7 @@
       }
       return { img: cvs, w: cols, h: rows };
     },
+    // Retrieve cached canvas for an item id
     get(id) { return this.cache[id]; }
   };
 
@@ -1070,11 +1118,14 @@
       this.midasPassiveTimer = 0;
       this.magusCooldownMax = 25;
       this.magusCooldown = 0;
+      this.prevMagusCooldown = 0;
+      this.prevPlayerJumps = 2;
       this.magusShield = 0;
       this.magusFlash = 0;
       this.magusSigils = [];
       this.cowCooldown = 0;
       this.overlayMessageTime = 0;
+      this.noirBackdropCache = null;
       this.orbit = null;
       this.currentCycle = this.cycle.get(0);
 
@@ -1106,6 +1157,14 @@
 
       this.ui.shopBtn.addEventListener("click", () => this.toggleShop(true));
       this.ui.closeShop.addEventListener("click", () => this.toggleShop(false));
+      
+      // Click on shop modal background (not items) to close shop
+      this.ui.shop.addEventListener("click", (e) => {
+        if (e.target === this.ui.shop) {
+          this.toggleShop(false);
+        }
+      });
+      
       this.ui.pause.addEventListener("click", () => this.togglePause());
 
       document.getElementById("cheat-close").onclick = () => this.applyCheats();
@@ -1133,6 +1192,24 @@
       if (this.cheats.fly) {
           this.player.vy = CONSTANTS.PHYSICS.JUMP; 
       } else {
+          // Detect triple jump (3rd jump before landing)
+          if (this.player.jumps === 1 && this.player.maxJumps === 3) {
+            // Spawning 3rd jump particles
+            const centerX = this.player.x + this.player.size/2;
+            const centerY = this.player.y + this.player.size;
+            for (let i = 0; i < 16; i++) {
+              const angle = (i / 16) * Math.PI * 2;
+              const speed = 200;
+              this.objs.parts.push({
+                x: centerX,
+                y: centerY,
+                vx: Math.cos(angle) * speed,
+                vy: Math.sin(angle) * speed,
+                l: 0.5,
+                c: "#ffed4e"
+              });
+            }
+          }
           this.player.jump();
       }
     }
@@ -1197,6 +1274,40 @@
 
         this.ui.mult.className = "";
         this.ui.multTime.innerText = "";
+    }
+
+    dieMidas() {
+      // Special Midas Crown death - day cycle completed
+      this.player.alive = false;
+      this.finalizeRunTotals();
+      this.ui.death.style.opacity = 1;
+      this.ui.death.className = "active"; 
+      this.ui.death.style.pointerEvents = "auto";
+      this.ui.death.innerText = "MIDAS' CURSE";
+      this.ui.deathSub.innerText = "Greed consumed him as day turned to night.\nPress Space to Restart";
+      this.isPaused = false;
+      this.ui.pause.style.display = "none";
+      
+      setTimeout(() => {
+          if(!this.player.alive) this.ui.shopBtn.style.display = "block";
+      }, 3000);
+      
+      this.ui.mult.className = "";
+      this.ui.multTime.innerText = "";
+      
+      // Spawn golden particles around player
+      for (let i = 0; i < 40; i++) {
+        const angle = (i / 40) * Math.PI * 2;
+        const speed = 250;
+        this.objs.parts.push({
+          x: this.player.x + this.player.size/2,
+          y: this.player.y + this.player.size/2,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          l: 1.2,
+          c: "#ffd700"
+        });
+      }
     }
 
     toggleShop(open) {
@@ -1501,6 +1612,23 @@
       if (this.isHatActive('king')) {
         this.markMidasPlatform(platform);
       }
+      
+      // Disco particles when landing with disco hat
+      if (this.isHatActive('afro') && Math.random() < 0.6) {
+        for (let i = 0; i < 12; i++) {
+          const angle = (i / 12) * Math.PI * 2;
+          const speed = Math.random() * 120 + 80;
+          const hue = Math.random() * 360;
+          this.objs.parts.push({
+            x: this.player.x + this.player.size/2,
+            y: this.player.y + this.player.size,
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed - 100,
+            l: 0.4,
+            c: `hsla(${hue},100%,60%,0.8)`
+          });
+        }
+      }
     }
 
     markMidasPlatform(platform) {
@@ -1547,7 +1675,26 @@
       this.worldTheme = this.determineWorldTheme();
       if (this.isHatActive('wizardMega')) {
         this.player.maxJumps = 3;
+        this.prevMagusCooldown = this.magusCooldown;
         this.magusCooldown = Math.max(0, this.magusCooldown - dt);
+        
+        // Spawn particles when cooldown completes
+        if (this.prevMagusCooldown > 0 && this.magusCooldown <= 0) {
+          const centerX = this.player.x + this.player.size/2;
+          const centerY = this.player.y - 45;
+          for (let i = 0; i < 20; i++) {
+            const angle = (i / 20) * Math.PI * 2;
+            const speed = 180;
+            this.objs.parts.push({
+              x: centerX,
+              y: centerY,
+              vx: Math.cos(angle) * speed,
+              vy: Math.sin(angle) * speed,
+              l: 0.6,
+              c: "#e9d4ff"
+            });
+          }
+        }
       } else {
         this.player.maxJumps = 2;
         this.magusCooldown = Math.max(0, this.magusCooldown - dt);
@@ -1803,6 +1950,12 @@
       const currP = this.currentCycle.p;
       this.orbit = this.computeCelestialState(currP);
       this.checkCrackTrigger(prevP, currP);
+      
+      // Midas death: day cycle ends with Midas Crown equipped
+      if (prevP < 1.0 && currP >= 1.0 && this.isHatActive('king')) {
+        this.dieMidas();
+        return;
+      }
 
       const col = this.currentCycle; 
       this.handleHatPassives(dt);
@@ -1931,6 +2084,19 @@
       this.objs.parts = this.objs.parts.filter(p => p.l > 0);
 
       if(!this.startDelay) this.player.update(dt, this.objs.plats, CONSTANTS.PHYSICS.GRAVITY, (p) => this.onPlayerLand(p));
+      
+      // Continuous disco particles while moving on platform with disco hat
+      if (this.isHatActive('afro') && this.player.vy === 0 && Math.abs(this.player.vx || 0) > 20 && Math.random() < 0.4) {
+        const hue = Math.random() * 360;
+        this.objs.parts.push({
+          x: this.player.x + this.player.size/2 + Math.random()*10 - 5,
+          y: this.player.y + this.player.size,
+          vx: (Math.random() - 0.5) * 60,
+          vy: -Math.random() * 200 - 50,
+          l: 0.35,
+          c: `hsla(${hue},100%,60%,0.7)`
+        });
+      }
       
       if(this.overlayMessageTime > 0 && !this.startDelay) {
         this.overlayMessageTime -= dt;
@@ -2146,9 +2312,25 @@
       this.drawClock(col.p);
 
       const colors = this.getWorldColors(col);
+      
+      // Apply Matrix effect if cyber glasses equipped
+      const hasMatrixEffect = this.data.equipped === 'cyberglasses';
+      let effectColors = colors;
+      if (hasMatrixEffect) {
+        effectColors = {
+          skyTop: "#001a00",
+          skyBot: "#000000",
+          far: "#0d2d0d",
+          near: "#1a5a1a",
+          hills: "#2d7a2d",
+          platform: { body: "#0d3d0d", top: "#00ff00" },
+          star: "#00ff00",
+          player: "#00dd00"
+        };
+      }
 
       const grad = ctx.createLinearGradient(0,0,0,H);
-      grad.addColorStop(0, colors.skyTop); grad.addColorStop(0.5, colors.skyBot); grad.addColorStop(1, Utils.lerpColor(colors.skyBot, "#ffffff", 0.5));
+      grad.addColorStop(0, effectColors.skyTop); grad.addColorStop(0.5, effectColors.skyBot); grad.addColorStop(1, Utils.lerpColor(effectColors.skyBot, "#ffffff", 0.05));
       ctx.fillStyle = grad; ctx.fillRect(0,0,W,H);
 
       let starAlpha = 0;
@@ -2271,8 +2453,8 @@
           ctx.restore();
           p.midasPulse = Math.max(0, p.midasPulse - 0.03);
         } else {
-          ctx.fillStyle=colors.platform.body; ctx.fillRect(p.x, p.y, p.w, p.h);
-          ctx.fillStyle=colors.platform.top; ctx.fillRect(p.x, p.y, p.w, 6);
+          ctx.fillStyle=effectColors.platform.body; ctx.fillRect(p.x, p.y, p.w, p.h);
+          ctx.fillStyle=effectColors.platform.top; ctx.fillRect(p.x, p.y, p.w, 6);
         }
         ctx.strokeRect(p.x, p.y, p.w, p.h);
       });
@@ -2287,7 +2469,7 @@
         }
       });
 
-      ctx.fillStyle = colors.star; ctx.shadowColor = colors.star; ctx.lineJoin = "round"; ctx.lineWidth = 4;
+      ctx.fillStyle = effectColors.star; ctx.shadowColor = effectColors.star; ctx.lineJoin = "round"; ctx.lineWidth = 4;
       this.objs.stars.forEach(s => {
         ctx.save(); ctx.translate(s.x, s.y); ctx.rotate(s.r);
         if(s.col) ctx.globalAlpha = Math.max(0, 1-(s.anim/0.5));
@@ -2306,7 +2488,7 @@
       ctx.globalAlpha = 1;
 
       const pl = this.player;
-      ctx.fillStyle = colors.player; ctx.fillRect(pl.x, pl.y, pl.size, pl.size);
+      ctx.fillStyle = effectColors.player; ctx.fillRect(pl.x, pl.y, pl.size, pl.size);
       ctx.shadowColor = "#e6ac00"; ctx.shadowBlur = 10; ctx.strokeStyle = "rgba(255,255,255,0.4)"; ctx.lineWidth = 2;
       ctx.strokeRect(pl.x, pl.y, pl.size, pl.size); ctx.shadowBlur = 0;
 
@@ -2357,6 +2539,80 @@
       if (this.isHatActive('spartan')) {
         this.drawSpartanTint(ctx);
       }
+      
+      // Draw Matrix effect scanlines when cyber glasses equipped
+      if (hasMatrixEffect) {
+        ctx.save();
+        ctx.fillStyle = "rgba(0,255,0,0.05)";
+        for (let y = 0; y < this.h; y += 2) {
+          ctx.fillRect(0, y, this.w, 1);
+        }
+        ctx.restore();
+        
+        // RoboCop-style target boxes for birds
+        this.objs.birds.forEach((b, idx) => {
+          this.drawMatrixTargetBox(ctx, b.x, b.y, 28, 20, `BIRD-${idx}`, `SPD: ${Math.floor(b.s)}m/s`);
+        });
+        
+        // RoboCop-style target boxes for shooting stars
+        if (this.shootStar) {
+          const velocity = Math.sqrt(this.shootStar.vx**2 + this.shootStar.vy**2);
+          this.drawMatrixTargetBox(ctx, this.shootStar.x, this.shootStar.y, 24, 24, "STAR", `VEL: ${Math.floor(velocity)}m/s`);
+        }
+        
+        // RoboCop-style target boxes for multipliers
+        this.objs.mults.forEach((m, idx) => {
+          this.drawMatrixTargetBox(ctx, m.x, m.y, 26, 26, "MULT", `x${m.v}`);
+        });
+      }
+    }
+    
+    drawMatrixTargetBox(ctx, x, y, w, h, label, info) {
+      ctx.save();
+      ctx.strokeStyle = "#00ff00";
+      ctx.fillStyle = "rgba(0,255,0,0.05)";
+      ctx.lineWidth = 2;
+      
+      // Main box - increased sizing for better visibility
+      ctx.strokeRect(x - w/2, y - h/2, w, h);
+      ctx.fillRect(x - w/2, y - h/2, w, h);
+      
+      // Corner brackets - improved visibility
+      const cornerLen = 8;
+      const corners = [
+        [x - w/2, y - h/2], [x + w/2, y - h/2],
+        [x - w/2, y + h/2], [x + w/2, y + h/2]
+      ];
+      
+      corners.forEach(([cx, cy]) => {
+        ctx.strokeStyle = "#00ff00";
+        ctx.lineWidth = 2;
+        if (cx === x - w/2) { // Left
+          ctx.beginPath();
+          ctx.moveTo(cx, cy - (cy === y - h/2 ? cornerLen : -cornerLen));
+          ctx.lineTo(cx, cy + (cy === y - h/2 ? cornerLen : -cornerLen));
+          ctx.moveTo(cx, cy);
+          ctx.lineTo(cx + cornerLen, cy);
+          ctx.stroke();
+        } else { // Right
+          ctx.beginPath();
+          ctx.moveTo(cx, cy - (cy === y - h/2 ? cornerLen : -cornerLen));
+          ctx.lineTo(cx, cy + (cy === y - h/2 ? cornerLen : -cornerLen));
+          ctx.moveTo(cx, cy);
+          ctx.lineTo(cx - cornerLen, cy);
+          ctx.stroke();
+        }
+      });
+      
+      // Label and info text - improved positioning and sizing
+      ctx.font = "bold 9px monospace";
+      ctx.textAlign = "left";
+      ctx.fillStyle = "#00ff00";
+      ctx.fillText(label, x - w/2 + 4, y - h/2 - 4);
+      ctx.font = "8px monospace";
+      ctx.fillText(info, x - w/2 + 4, y + h/2 + 10);
+      
+      ctx.restore();
     }
 
     drawSpaceCows(ctx) {
@@ -2548,11 +2804,36 @@
       if (this.isHatActive('wizardMega')) {
         const cd = Math.max(0, this.magusCooldown);
         ctx.save();
-        ctx.font = "12px 'Segoe UI', sans-serif";
+        
+        // Circular cooldown indicator
+        const x = pl.x + pl.size/2;
+        const y = pl.y - 45;
+        const radius = 20;
+        const progress = 1 - (cd / this.magusCooldownMax);
+        
+        // Background circle
+        ctx.fillStyle = "rgba(100, 50, 150, 0.3)";
+        ctx.beginPath();
+        ctx.arc(x, y, radius, 0, Math.PI*2);
+        ctx.fill();
+        
+        // Progress arc
+        if (progress > 0.01) {
+          ctx.strokeStyle = cd <= 0.1 ? "#e9d4ff" : "#c9a3ff";
+          ctx.lineWidth = 4;
+          ctx.beginPath();
+          ctx.arc(x, y, radius, -Math.PI/2, -Math.PI/2 + (Math.PI*2*progress));
+          ctx.stroke();
+        }
+        
+        // Center text
+        ctx.font = "bold 10px 'Segoe UI', sans-serif";
         ctx.textAlign = "center";
-        ctx.fillStyle = cd <= 0.1 ? "#e9d4ff" : "rgba(255,255,255,0.8)";
-        const label = cd <= 0.1 ? "MAGUS READY" : `MAGUS ${Math.ceil(cd)}s`;
-        ctx.fillText(label, pl.x + pl.size/2, pl.y - 50);
+        ctx.textBaseline = "middle";
+        ctx.fillStyle = cd <= 0.1 ? "#e9d4ff" : "#c9a3ff";
+        const label = cd <= 0.1 ? "✓" : Math.ceil(cd);
+        ctx.fillText(label, x, y);
+        
         ctx.restore();
       }
     }
@@ -2568,27 +2849,95 @@
     }
 
     drawNoirCity(ctx) {
-      ctx.save();
-      ctx.fillStyle = "#0a0c14";
-      ctx.fillRect(0, this.h*0.6, this.w, this.h*0.4);
-      for(let i=0; i<22; i++) {
-        const w = Utils.rand(40, 90);
-        const h = Utils.rand(this.h*0.2, this.h*0.45);
-        const x = i * (this.w/20) + Utils.rand(-20, 20);
-        const y = this.h*0.6 - h;
-        ctx.fillStyle = `rgba(15,18,30,${Utils.rand(0.6,0.95)})`;
-        ctx.fillRect(x, y, w, h);
-        for(let wy=y+10; wy<y+h; wy+=12) {
-          for(let wx=x+6; wx<x+w-6; wx+=10) {
-            if(Math.random() < 0.3) {
-              ctx.fillStyle = "rgba(255,255,200,0.4)";
-              ctx.fillRect(wx, wy, 3, 6);
+      // Generate backdrop once and cache it
+      if (!this.noirBackdropCache) {
+        this.noirBackdropCache = document.createElement('canvas');
+        this.noirBackdropCache.width = this.w;
+        this.noirBackdropCache.height = this.h;
+        const cacheCtx = this.noirBackdropCache.getContext('2d');
+        
+        // 1940s color palette: dark browns, rust, deep purples
+        cacheCtx.fillStyle = "#0f0e12";
+        cacheCtx.fillRect(0, 0, this.w, this.h);
+        
+        // Starry sky gradient with faint stars
+        const skyGrad = cacheCtx.createLinearGradient(0, 0, 0, this.h*0.5);
+        skyGrad.addColorStop(0, "rgba(20,18,30,0.9)");
+        skyGrad.addColorStop(1, "rgba(40,35,60,0.7)");
+        cacheCtx.fillStyle = skyGrad;
+        cacheCtx.fillRect(0, 0, this.w, this.h*0.6);
+        
+        // Scattered stars for atmosphere
+        for(let i=0; i<15; i++) {
+          const sx = (i*i*1234)%(this.w);
+          const sy = ((i*567)%(this.h*0.5));
+          cacheCtx.fillStyle = `rgba(180,160,200,${0.3+Math.sin(i)*0.3})`;
+          cacheCtx.fillRect(sx, sy, 1.5, 1.5);
+        }
+        
+        // Dark street/ground
+        cacheCtx.fillStyle = "#1a1815";
+        cacheCtx.fillRect(0, this.h*0.6, this.w, this.h*0.4);
+        
+        // Use seeded random for consistent building layout
+        let seed = 12345;
+        const seededRand = (min, max) => {
+          seed = (seed * 9301 + 49297) % 233280;
+          return min + (seed / 233280) * (max - min);
+        };
+        
+        // Buildings with rust/brown tones
+        for(let i=0; i<22; i++) {
+          const w = seededRand(40, 90);
+          const h = seededRand(this.h*0.2, this.h*0.45);
+          const x = i * (this.w/20) + seededRand(-20, 20);
+          const y = this.h*0.6 - h;
+          
+          // Rust and brown building colors
+          const colors = ["rgba(80,50,40,0.8)", "rgba(70,45,35,0.85)", "rgba(90,55,45,0.8)"];
+          cacheCtx.fillStyle = colors[i%3];
+          cacheCtx.fillRect(x, y, w, h);
+          
+          // Building outlines for definition
+          cacheCtx.strokeStyle = "rgba(50,30,20,0.6)";
+          cacheCtx.lineWidth = 1;
+          cacheCtx.strokeRect(x, y, w, h);
+          
+          // Windows with occasional neon glow
+          for(let wy=y+10; wy<y+h; wy+=12) {
+            for(let wx=x+6; wx<x+w-6; wx+=10) {
+              if(seededRand(0, 1) < 0.35) {
+                // Warm window light (1940s apartment glow)
+                cacheCtx.fillStyle = "rgba(255,200,100,0.5)";
+                cacheCtx.fillRect(wx, wy, 3, 6);
+                // Occasional neon glow (red/cyan)
+                if(seededRand(0,1) < 0.1) {
+                  cacheCtx.fillStyle = seededRand(0,1)<0.5 ? "rgba(255,80,120,0.3)" : "rgba(100,200,255,0.3)";
+                  cacheCtx.fillRect(wx-1, wy-1, 5, 8);
+                }
+              }
             }
           }
         }
+        
+        // Rooftop details
+        cacheCtx.fillStyle = "#2a2520";
+        cacheCtx.fillRect(0, this.h*0.58, this.w, 8);
+        
+        // Street line
+        cacheCtx.fillStyle = "#3a3530";
+        cacheCtx.fillRect(0, this.h*0.68, this.w, 20);
+        
+        // Smoky atmospheric overlay
+        const smokeGrad = cacheCtx.createLinearGradient(0, this.h*0.4, 0, this.h);
+        smokeGrad.addColorStop(0, "rgba(0,0,0,0)");
+        smokeGrad.addColorStop(1, "rgba(40,30,50,0.15)");
+        cacheCtx.fillStyle = smokeGrad;
+        cacheCtx.fillRect(0, 0, this.w, this.h);
       }
-      ctx.fillStyle = "#1c1e2b";
-      ctx.fillRect(0, this.h*0.68, this.w, 20);
+      
+      ctx.save();
+      ctx.drawImage(this.noirBackdropCache, 0, 0);
       ctx.restore();
     }
 
